@@ -1,0 +1,60 @@
+# Dependencies
+node_modules/
+
+# Firebase
+.firebase/
+serviceAccountKey.json
+firebase-debug.log
+firestore-debug.log
+
+# Environment variables
+.env
+.env.local
+.env.production
+.env.development
+
+# Build outputs
+build/
+dist/
+.next/
+out/
+node_modules/.cache/
+.turbo/
+
+# TypeScript
+tsconfig.tsbuildinfo
+*.tsbuildinfo
+
+# Media files
+*.mp4
+*.mov
+*.avi
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Testing
+coverage/
+.nyc_output/
+
+# Debug artifacts
+debug_logs.py
+last_code.json
+last_result.json
+dyad_research/
+# Cloud Functions compiled output
+functions/lib/

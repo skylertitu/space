@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /configuracion/
+Disallow: /perfil/
+Disallow: /nucleo/
+Disallow: /application/
+
+Sitemap: https://byroosevelt.com/sitemap.xml

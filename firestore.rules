@@ -1,0 +1,60 @@
+rules_version = '2';
+
+// Aislamiento multi-tenant.
+//
+// Todo dato de cliente vive bajo users/{uid}/... y SOLO su dueño puede leerlo o
+// escribirlo desde el SDK web. Cualquier otra ruta queda denegada para clientes;
+// las rutas API, webhooks y Cloud Functions usan el Admin SDK (que ignora estas
+// reglas) y verifican la identidad por su cuenta (ver src/lib/apiAuth.ts).
+//
+// NO agregar reglas globales (`/{document=**}`) ni `allow ...: if true`: anulan
+// el aislamiento entre clientes. Las consultas collectionGroup desde el navegador
+// quedan denegadas a propósito: hacerlas por el servidor.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    // Colecciones que SOLO escribe el servidor (Admin SDK). El dueño puede leerlas pero no escribirlas:
+    // si pudiera, falsificaría su propia suscripción (p. ej. plan "enterprise") o sus pagos.
+    //   subscriptions/*   plan y vigencia      paymentRequests/*   órdenes de pago
+    function isServerOnlyCollection(coll) {
+      return coll == 'subscriptions' || coll == 'paymentRequests';
+    }
+
+    match /users/{uid} {
+      allow read, write: if isOwner(uid);
+
+      match /subscriptions/{doc=**} {
+        allow read: if isOwner(uid);
+      }
+      match /paymentRequests/{doc=**} {
+        allow read: if isOwner(uid);
+      }
+
+      match /entities/{eid} {
+        allow read, write: if isOwner(uid);
+
+        match /subscriptions/{doc=**} {
+          allow read: if isOwner(uid);
+        }
+        match /paymentRequests/{doc=**} {
+          allow read: if isOwner(uid);
+        }
+        // contacts, kanban-groups, integrations, bots, ... (todo lo demás de la entidad)
+        match /{coll}/{doc=**} {
+          allow read, write: if isOwner(uid) && !isServerOnlyCollection(coll);
+        }
+      }
+
+      // entity_slugs/*, referrals/* ... (otras colecciones del usuario)
+      match /{coll}/{doc=**} {
+        allow read, write: if isOwner(uid) && coll != 'entities' && !isServerOnlyCollection(coll);
+      }
+    }
+
+    // Todo lo demás (system_mappings, webhook_diagnostics, ...): solo servidor.
+  }
+}

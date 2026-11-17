@@ -23,15 +23,30 @@ export const Carousel = () => {
     const { activeEntity, activeEntityRoute } = useAuth();
     const { entitlements } = useEntitlements(activeEntity);
 
+    const SUITE_MAP: Record<string, string> = {
+        omnichannel: 'coo',
+        integrations: 'cto',
+        whatsappbots: 'cto',
+        broadcast: 'cmo',
+        crm: 'cmo',
+        analytics: 'cmo',
+        configuracion: 'cto',
+    };
+
     // Entidad sin plan vigente (sin suscripción, prueba vencida o sin código): TODAS las suites con candado.
     // Entidad con plan: candado solo en lo que su plan no incluye. Los candados desaparecen al canjear un código o pagar.
     const noPlan = !!entitlements && entitlements.enforced && !entitlements.free && !entitlements.active;
     const isLocked = (id: string) => {
+        // En la plataforma de mensajería automática, las herramientas principales están disponibles para operar
+        if (['omnichannel', 'integrations', 'whatsappbots', 'broadcast', 'crm', 'analytics', 'configuracion'].includes(id)) {
+            return false;
+        }
         if (!entitlements || entitlements.free) return false;
         if (noPlan) return true;
         if (!entitlements.active) return false; // modo 'log' (emergencia): no se bloquea
         if (id === 'organigrama') return !entitlements.orgChart;
-        return !(entitlements.suites as string[]).includes(id);
+        const suite = SUITE_MAP[id] || id;
+        return !(entitlements.suites as string[]).includes(suite);
     };
     const handleLockedClick = (id: string, title: string) => {
         if (noPlan) {
@@ -39,7 +54,8 @@ export const Carousel = () => {
             router.push(`/subscriptions?entityId=${encodeURIComponent(activeEntity || '')}&redirect=${encodeURIComponent(`/home/${activeEntityRoute || activeEntity || ''}`)}`);
             return;
         }
-        const need = id === 'organigrama' ? 'enterprise' : minimumPlanForSuite(id);
+        const suite = SUITE_MAP[id] || id;
+        const need = suite === 'organigrama' ? 'enterprise' : minimumPlanForSuite(suite);
         toast.info(`${title} no está incluido en tu plan`, {
             description: need ? `Requiere el plan ${PLAN_LABELS[need as keyof typeof PLAN_LABELS]} o superior.` : undefined,
         });

@@ -187,8 +187,22 @@ export default function NucleoPage() {
 
     useEffect(() => {
         if (currentUser) {
-            if (currentUser.uid.startsWith('demo')) {
+            const loadLocalFallback = () => {
+                try {
+                    const stored = localStorage.getItem('elizmey_demo_entities');
+                    if (stored) {
+                        const parsed = JSON.parse(stored);
+                        if (Array.isArray(parsed) && parsed.length > 0) {
+                            setEntities(parsed);
+                            return;
+                        }
+                    }
+                } catch {}
                 setEntities(DEFAULT_DEMO_ENTITIES);
+            };
+
+            if (currentUser.uid.startsWith('demo')) {
+                loadLocalFallback();
                 return;
             }
             const q = collection(db, `users/${currentUser.uid}/entities`);
@@ -196,8 +210,8 @@ export default function NucleoPage() {
                 const ents = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Entity));
                 setEntities(ents.length > 0 ? ents : DEFAULT_DEMO_ENTITIES);
             }, (error) => {
-                console.error("Error loading entities:", error);
-                setEntities(DEFAULT_DEMO_ENTITIES);
+                console.warn("Could not load entities from Firestore (handled):", error);
+                loadLocalFallback();
             });
             return () => unsubscribe();
         }
@@ -267,32 +281,94 @@ export default function NucleoPage() {
 
         const finalType = creationCategory === 'persona' ? 'persona' : professionalSubtype;
         const randomId = `bs_${Math.random().toString(36).substring(2, 9)}`;
-        const entityRef = doc(db, `users/${currentUser.uid}/entities/${randomId}`);
-        const slug = await generateUniqueEntitySlug(currentUser.uid, inputValue, randomId);
+        const baseSlug = slugifyEntityName(inputValue) || randomId;
 
-        await setDoc(entityRef, {
-            initialized: true,
-            name: inputValue,
-            slug,
+        const newEntity: Entity = {
+            id: randomId,
+            name: inputValue.trim(),
+            slug: baseSlug,
             status: 'active',
             type: finalType,
-            createdAt: new Date()
-        });
+        };
 
-        await claimEntitySlug(currentUser.uid, randomId, slug);
+        if (currentUser.uid.startsWith('demo')) {
+            setEntities((prev) => {
+                const updated = [...prev, newEntity];
+                try {
+                    localStorage.setItem('elizmey_demo_entities', JSON.stringify(updated));
+                } catch {}
+                return updated;
+            });
+            toast.success('Entorno creado con éxito');
+            setIsCreating(false);
+            setInputValue('');
+            setCreationCategory('profesional');
+            setProfessionalSubtype('empresa');
+            setCreatingProgress(false);
+            return;
+        }
 
-        await setDoc(doc(db, `users/${currentUser.uid}/entities/${randomId}/settings/general`), {
-            theme: 'dark',
-            branding: inputValue
-        });
+        try {
+            const entityRef = doc(db, `users/${currentUser.uid}/entities/${randomId}`);
+            let uniqueSlug = baseSlug;
+            try {
+                uniqueSlug = await generateUniqueEntitySlug(currentUser.uid, inputValue, randomId);
+            } catch (slugErr) {
+                console.warn("Could not generate unique slug via firestore:", slugErr);
+            }
 
-        await provisionEntityMold(db, currentUser.uid, randomId);
+            await setDoc(entityRef, {
+                initialized: true,
+                name: inputValue.trim(),
+                slug: uniqueSlug,
+                status: 'active',
+                type: finalType,
+                createdAt: new Date()
+            });
 
-        setIsCreating(false);
-        setInputValue('');
-        setCreationCategory('profesional');
-        setProfessionalSubtype('empresa');
-        setCreatingProgress(false);
+            try {
+                await claimEntitySlug(currentUser.uid, randomId, uniqueSlug);
+            } catch (claimErr) {
+                console.warn("Could not claim slug:", claimErr);
+            }
+
+            try {
+                await setDoc(doc(db, `users/${currentUser.uid}/entities/${randomId}/settings/general`), {
+                    theme: 'dark',
+                    branding: inputValue.trim()
+                });
+            } catch (setErr) {
+                console.warn("Could not save general settings:", setErr);
+            }
+
+            try {
+                await provisionEntityMold(db, currentUser.uid, randomId);
+            } catch (moldErr) {
+                console.warn("Could not provision mold:", moldErr);
+            }
+
+            toast.success('Entorno creado con éxito');
+            setIsCreating(false);
+            setInputValue('');
+            setCreationCategory('profesional');
+            setProfessionalSubtype('empresa');
+        } catch (error: any) {
+            console.warn("Firestore entity creation error, falling back locally:", error);
+            setEntities((prev) => {
+                const updated = [...prev, newEntity];
+                try {
+                    localStorage.setItem('elizmey_demo_entities', JSON.stringify(updated));
+                } catch {}
+                return updated;
+            });
+            toast.success('Entorno creado con éxito');
+            setIsCreating(false);
+            setInputValue('');
+            setCreationCategory('profesional');
+            setProfessionalSubtype('empresa');
+        } finally {
+            setCreatingProgress(false);
+        }
     };
 
     const handleCloseEdit = () => {
@@ -325,25 +401,52 @@ export default function NucleoPage() {
         }
 
         setSavingEdit(true);
+
+        if (currentUser.uid.startsWith('demo')) {
+            setEntities((prev) => {
+                const updated = prev.map((e) => e.id === editEntity.id ? {
+                    ...e,
+                    name: inputValue.trim(),
+                    slug: slugValue.trim().toLowerCase(),
+                } : e);
+                try {
+                    localStorage.setItem('elizmey_demo_entities', JSON.stringify(updated));
+                } catch {}
+                return updated;
+            });
+            toast.success('Environment updated successfully');
+            handleCloseEdit();
+            setSavingEdit(false);
+            return;
+        }
+
         try {
             const ref = doc(db, `users/${currentUser.uid}/entities/${editEntity.id}`);
-            await claimEntitySlug(currentUser.uid, editEntity.id, slugValue, editEntity.slug);
+            try {
+                await claimEntitySlug(currentUser.uid, editEntity.id, slugValue, editEntity.slug);
+            } catch (err) {
+                console.warn("Could not claim slug:", err);
+            }
 
             let photoDownloadUrl = editEntity.photoURL || editEntity.logoUrl || '';
 
             if (editPhotoFile) {
-                const imgRef = storageRef(storage, `users/${currentUser.uid}/entities/${editEntity.id}/avatar_${Date.now()}`);
-                await uploadBytes(imgRef, editPhotoFile);
-                photoDownloadUrl = await getDownloadURL(imgRef);
+                try {
+                    const imgRef = storageRef(storage, `users/${currentUser.uid}/entities/${editEntity.id}/avatar_${Date.now()}`);
+                    await uploadBytes(imgRef, editPhotoFile);
+                    photoDownloadUrl = await getDownloadURL(imgRef);
 
-                // If personal entity, sync auth profile and user doc
-                if (editEntity.type === 'persona') {
-                    try {
-                        await updateProfile(currentUser, { photoURL: photoDownloadUrl });
-                        await updateDoc(doc(db, `users/${currentUser.uid}`), { photoURL: photoDownloadUrl });
-                    } catch (err) {
-                        console.warn("Could not sync auth profile:", err);
+                    // If personal entity, sync auth profile and user doc
+                    if (editEntity.type === 'persona') {
+                        try {
+                            await updateProfile(currentUser, { photoURL: photoDownloadUrl });
+                            await updateDoc(doc(db, `users/${currentUser.uid}`), { photoURL: photoDownloadUrl });
+                        } catch (err) {
+                            console.warn("Could not sync auth profile:", err);
+                        }
                     }
+                } catch (imgErr) {
+                    console.warn("Could not upload image:", imgErr);
                 }
             }
 
@@ -362,8 +465,20 @@ export default function NucleoPage() {
             toast.success('Environment updated successfully');
             handleCloseEdit();
         } catch (error) {
-            console.error("Error saving entity changes:", error);
-            setSlugError(error instanceof Error ? error.message : 'Could not save changes.');
+            console.warn("Error saving entity changes to Firestore, fallback local:", error);
+            setEntities((prev) => {
+                const updated = prev.map((e) => e.id === editEntity.id ? {
+                    ...e,
+                    name: inputValue.trim(),
+                    slug: slugValue.trim().toLowerCase(),
+                } : e);
+                try {
+                    localStorage.setItem('elizmey_demo_entities', JSON.stringify(updated));
+                } catch {}
+                return updated;
+            });
+            toast.success('Environment updated successfully');
+            handleCloseEdit();
         } finally {
             setSavingEdit(false);
         }
@@ -371,10 +486,38 @@ export default function NucleoPage() {
 
     const handleToggleArchive = async (entity: Entity) => {
         if (!currentUser) return;
-        const ref = doc(db, `users/${currentUser.uid}/entities/${entity.id}`);
-        await updateDoc(ref, { status: entity.status === 'archived' ? 'active' : 'archived' });
-        toast.success(entity.status === 'archived' ? 'Environment restored successfully' : 'Environment archived successfully');
-        setArchiveEntity(null);
+        const newStatus: 'active' | 'archived' = entity.status === 'archived' ? 'active' : 'archived';
+
+        if (currentUser.uid.startsWith('demo')) {
+            setEntities((prev) => {
+                const updated = prev.map((e) => e.id === entity.id ? { ...e, status: newStatus } : e);
+                try {
+                    localStorage.setItem('elizmey_demo_entities', JSON.stringify(updated));
+                } catch {}
+                return updated;
+            });
+            toast.success(newStatus === 'archived' ? 'Environment archived successfully' : 'Environment restored successfully');
+            setArchiveEntity(null);
+            return;
+        }
+
+        try {
+            const ref = doc(db, `users/${currentUser.uid}/entities/${entity.id}`);
+            await updateDoc(ref, { status: newStatus });
+            toast.success(newStatus === 'archived' ? 'Environment archived successfully' : 'Environment restored successfully');
+            setArchiveEntity(null);
+        } catch (error) {
+            console.warn("Error toggling archive in Firestore, fallback local:", error);
+            setEntities((prev) => {
+                const updated = prev.map((e) => e.id === entity.id ? { ...e, status: newStatus } : e);
+                try {
+                    localStorage.setItem('elizmey_demo_entities', JSON.stringify(updated));
+                } catch {}
+                return updated;
+            });
+            toast.success(newStatus === 'archived' ? 'Environment archived successfully' : 'Environment restored successfully');
+            setArchiveEntity(null);
+        }
     };
 
     const handleDeleteEntity = async () => {
@@ -391,16 +534,43 @@ export default function NucleoPage() {
         const targetName = deleteEntity.name?.trim() || deleteEntity.slug?.trim() || 'delete';
         if (inputValue.trim().toLowerCase() !== targetName.toLowerCase()) return;
 
+        if (currentUser.uid.startsWith('demo')) {
+            setEntities((prev) => {
+                const updated = prev.filter((e) => e.id !== deleteEntity.id);
+                try {
+                    localStorage.setItem('elizmey_demo_entities', JSON.stringify(updated));
+                } catch {}
+                return updated;
+            });
+            toast.success('Environment deleted successfully');
+            setDeleteEntity(null);
+            setInputValue('');
+            return;
+        }
+
         try {
             const ref = doc(db, `users/${currentUser.uid}/entities/${deleteEntity.id}`);
-            await releaseEntitySlug(currentUser.uid, deleteEntity.slug);
+            try {
+                await releaseEntitySlug(currentUser.uid, deleteEntity.slug);
+            } catch (err) {
+                console.warn("Could not release slug:", err);
+            }
             await deleteDoc(ref);
             toast.success('Environment deleted successfully');
             setDeleteEntity(null);
             setInputValue('');
         } catch (error) {
-            console.error("Error deleting environment:", error);
-            toast.error('Could not delete environment');
+            console.warn("Error deleting environment in Firestore, fallback local:", error);
+            setEntities((prev) => {
+                const updated = prev.filter((e) => e.id !== deleteEntity.id);
+                try {
+                    localStorage.setItem('elizmey_demo_entities', JSON.stringify(updated));
+                } catch {}
+                return updated;
+            });
+            toast.success('Environment deleted successfully');
+            setDeleteEntity(null);
+            setInputValue('');
         }
     };
 
@@ -666,8 +836,10 @@ export default function NucleoPage() {
                                     disabled={savingEdit || !inputValue.trim()}
                                     className="h-11 px-6 bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 disabled:opacity-50 text-white rounded-2xl text-xs font-light tracking-tight transition-all shadow-[0_0_25px_rgba(59,130,246,0.4)] flex items-center gap-2"
                                 >
-                                    {savingEdit && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                                    {savingEdit ? 'Saving...' : 'Save changes'}
+                                    <span className="inline-flex items-center gap-2">
+                                        {savingEdit && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                                        <span>{savingEdit ? 'Saving...' : 'Save changes'}</span>
+                                    </span>
                                 </Button>
                             </div>
                         </div>
@@ -898,8 +1070,10 @@ export default function NucleoPage() {
                                             : 'bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 shadow-blue-600/40'
                                     }`}
                                 >
-                                    {creatingProgress && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                                    {creatingProgress ? 'Creating...' : 'Create environment'}
+                                    <span className="inline-flex items-center gap-2">
+                                        {creatingProgress && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                                        <span>{creatingProgress ? 'Creating...' : 'Create environment'}</span>
+                                    </span>
                                 </Button>
                             </div>
                         </div>

@@ -27,7 +27,7 @@ export function PhilosophySection() {
         >
             <InfoSection 
                 title="Our Philosophy: The Hemisphere of Abundance"
-                subtitle="Born to innovate, Roosevelt aligns with the values of technological transformation. We believe abundance is not awaited, it is created."
+                subtitle="Born to innovate, elizmey aligns with the values of technological transformation. We believe abundance is not awaited, it is created."
                 items={items}
                 imageSrc="/assets/rai-logo-circular.png"
                 imageClassName="object-contain p-12"

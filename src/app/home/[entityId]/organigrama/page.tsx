@@ -12,7 +12,7 @@ import { ArrowLeft, Network, Users, Bot, ShieldCheck, Layers } from 'lucide-reac
  */
 const FEATURES = [
     { icon: Users, title: 'People', text: 'Employees and collaborators with their role, reporting line and assigned suites.' },
-    { icon: Bot, title: 'SI agents', text: 'Roosevelt Super Intelligence agents placed in the chart with their own scope and limits.' },
+    { icon: Bot, title: 'SI agents', text: 'elizmey agents placed in the chart with their own scope and limits.' },
     { icon: Layers, title: 'Suite assignment', text: 'Decide who and which agent operates CTO, COO, CMO, CFO and every other suite.' },
     { icon: ShieldCheck, title: 'Role permissions', text: 'Granular access per role, enforced on the server, with an audit trail.' },
 ];

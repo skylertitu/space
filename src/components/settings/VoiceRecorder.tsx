@@ -219,7 +219,7 @@ export function VoiceRecorder({ onUploadSuccess, onClear, initialUrl = null }: V
             )}
 
             <p className="text-[9px] text-neutral-600 leading-relaxed">
-                El audio se guarda en Roosevelt y se registra en Meta al enviar el flujo. Formatos compatibles: OGG, MP3, AAC.
+                El audio se guarda en elizmey y se registra en Meta al enviar el flujo. Formatos compatibles: OGG, MP3, AAC.
             </p>
         </div>
     );

@@ -135,14 +135,14 @@ const WaveTitle = ({ replay = false }: { replay?: boolean }) => {
   let index = 0;
   return (
     <h1
-      aria-label="Welcome to the new era of autonomy with Roosevelt"
+      aria-label="Welcome to the new era of autonomy with elizmey"
       className="text-[1.75rem] leading-[1.15] sm:text-4xl md:text-5xl xl:text-6xl font-light tracking-tight text-white mb-4 leading-[1.15]"
     >
       {TITLE_LINES.map((words, li) => (
         <React.Fragment key={li}>
           {li > 0 && <br className="hidden md:block" />}
           {words.map((word, wi) => {
-            const isBrand = word === 'Roosevelt';
+            const isBrand = word === 'elizmey' || word === 'Roosevelt';
             return (
               <React.Fragment key={wi}>
                 <span aria-hidden="true" className="inline-block whitespace-nowrap">
@@ -288,7 +288,7 @@ export default function LandingPage() {
       <div className="absolute top-0 left-0 w-full h-[100svh] pointer-events-none z-0 opacity-100 overflow-hidden">
         <img
           src="https://firebasestorage.googleapis.com/v0/b/roosevelt-491004.firebasestorage.app/o/square.gif?alt=media&token=fffc42d4-05c9-4b9f-8c9d-4d17fc4809c9"
-          alt="Roosevelt Super Intelligence"
+          alt="elizmey"
           className="absolute top-1/2 xl:top-[47%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(max(120vw,80svh),125svh)] max-w-none xl:w-[110vw] xl:max-w-[1080px] h-auto object-contain"
           loading="lazy"
           decoding="async"
@@ -359,7 +359,7 @@ export default function LandingPage() {
           <div className="absolute inset-0 pointer-events-none z-0 opacity-80 overflow-hidden flex items-center justify-center">
             <img
               src="/assets/Roosevelt Ai.gif"
-              alt="Roosevelt Super Intelligence Background"
+              alt="elizmey Background"
               className="w-full max-w-[110vw] md:max-w-[90vw] xl:max-w-6xl h-auto scale-[1.55] md:scale-[1.35] xl:scale-[1.35] object-cover opacity-80"
               loading="lazy"
               decoding="async"

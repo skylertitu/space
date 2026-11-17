@@ -53,7 +53,7 @@ export const ApplicationLogin = ({ contact, onLoginSuccess }: ApplicationLoginPr
                 </div>
                 <div className="space-y-2">
                     <h2 className="text-3xl font-bold tracking-tight text-white">Acceso Seguro</h2>
-                    <p className="text-neutral-400 text-sm">Ingresa tus datos para acceder a tu solicitud de Roosevelt</p>
+                    <p className="text-neutral-400 text-sm">Ingresa tus datos para acceder a tu solicitud de elizmey</p>
                 </div>
             </div>
 

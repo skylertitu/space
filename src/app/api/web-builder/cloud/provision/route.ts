@@ -26,7 +26,7 @@ export async function POST(req: Request) {
         // PROJECT ISOLATION: The AI prompt will be instructed to prefix tables with the projectId.
 
         const managedConfig = {
-            supabaseUrl: "https://managed-db.roosevelt.com",
+            supabaseUrl: "https://managed-db.elizmey.com",
             supabaseAnonKey: `sb_anon_${projectId}_dev_key_placeholder`,
             databaseMode: 'automatic' as const,
             cloudRegion: region,

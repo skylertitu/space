@@ -241,8 +241,8 @@ export default function NucleoPage() {
 
         const route = getEntityRouteSegment(entity);
         setActiveEntity(entity.id, route);
-        localStorage.setItem('roosevelt_active_entity', entity.id);
-        localStorage.setItem('roosevelt_active_entity_route', route);
+        localStorage.setItem('elizmey_active_entity', entity.id);
+        localStorage.setItem('elizmey_active_entity_route', route);
 
         // El entorno personal es el único gratuito y no requiere suscripción
         if (entity.type === 'persona') {
@@ -632,7 +632,7 @@ export default function NucleoPage() {
                             <div className="space-y-1.5">
                                 <label className="block text-xs font-light uppercase tracking-wider text-white/60">Access Route (Slug)</label>
                                 <div className="flex items-center bg-white/[0.05] border border-white/15 rounded-2xl px-4 py-3.5 text-sm focus-within:border-blue-400 focus-within:ring-4 focus-within:ring-blue-500/15 transition-all">
-                                    <span className="text-white/40 font-light tracking-tight text-xs mr-1 select-none">itsroosevelt.com/home/</span>
+                                    <span className="text-white/40 font-light tracking-tight text-xs mr-1 select-none">elizmey.com/home/</span>
                                     <input
                                         type="text"
                                         value={slugValue}
@@ -876,7 +876,7 @@ export default function NucleoPage() {
                                     value={inputValue}
                                     onChange={(e) => setInputValue(e.target.value)}
                                     className="w-full bg-white/[0.05] border border-white/15 rounded-2xl px-4 py-3.5 text-sm font-light tracking-tight text-white placeholder:text-white/30 focus:border-blue-400 focus:bg-white/[0.08] focus:ring-4 focus:ring-blue-500/15 focus:outline-none transition-all"
-                                    placeholder={creationCategory === 'persona' ? "e.g. My Personal Space..." : professionalSubtype === 'creador' ? "e.g. Roosevelt Studio..." : "e.g. Udreamms LLC..."}
+                                    placeholder={creationCategory === 'persona' ? "e.g. My Personal Space..." : professionalSubtype === 'creador' ? "e.g. elizmey Studio..." : "e.g. Udreamms LLC..."}
                                     autoFocus
                                 />
                             </div>

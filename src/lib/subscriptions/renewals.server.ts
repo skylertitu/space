@@ -61,7 +61,7 @@ export const stripeCharger: RenewalCharger = async (req) => {
                 payment_method: req.paymentMethodId,
                 off_session: true,
                 confirm: true,
-                description: 'Renovación de suscripción Roosevelt',
+                description: 'Renovación de suscripción elizmey',
                 metadata: req.metadata,
             },
             { idempotencyKey: req.idempotencyKey }

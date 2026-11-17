@@ -529,7 +529,7 @@ export function buildBotRulesExport() {
     exportedAt: new Date().toISOString(),
     schemaVersion: 1,
     purpose: 'Catálogo de nodos (herramientas) y reglas del motor para crear o enriquecer flujos con SI',
-    platform: 'roosevelt-chatbot',
+    platform: 'elizmey-chatbot',
     flowRules: BOT_FLOW_RULES,
     conditionOperators: BOT_CONDITION_OPERATORS,
     runtimeSupportedTypes: allNodes.filter((n) => n.runtimeStatus === 'runtime').map((n) => n.type),

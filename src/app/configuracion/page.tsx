@@ -298,7 +298,7 @@ function ConfigurationPageContent() {
 
     React.useEffect(() => {
         setActiveEntity('life');
-        localStorage.setItem('roosevelt_active_entity', 'life');
+        localStorage.setItem('elizmey_active_entity', 'life');
     }, [setActiveEntity]);
 
     React.useEffect(() => {
@@ -537,7 +537,7 @@ function ConfigurationPageContent() {
                                             key={ent.id}
                                             onSelect={() => {
                                                 setActiveEntity(ent.id);
-                                                localStorage.setItem('roosevelt_active_entity', ent.id);
+                                                localStorage.setItem('elizmey_active_entity', ent.id);
                                             }}
                                             className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/5 cursor-pointer outline-none transition-all group"
                                         >
@@ -639,7 +639,7 @@ function ConfigurationPageContent() {
                                 <div className="mb-8">
                                     <h3 className="text-xl font-medium text-white mb-2">Subscriptions</h3>
                                     <p className="text-sm text-gray-400 leading-relaxed font-light">
-                                        View and manage your Roosevelt plan. Payments are handled on the subscriptions page.
+                                        View and manage your elizmey plan. Payments are handled on the subscriptions page.
                                     </p>
                                 </div>
 
@@ -772,7 +772,7 @@ function ConfigurationPageContent() {
                                                 value={profileData.website}
                                                 onChange={e => setProfileData({ ...profileData, website: e.target.value })}
                                                 className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-4 text-sm focus:border-blue-500/50 focus:outline-none transition-colors"
-                                                placeholder="https://roosevelt.system"
+                                                placeholder="https://elizmey.system"
                                             />
                                         </div>
 

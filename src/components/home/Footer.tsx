@@ -61,7 +61,7 @@ export default function Footer() {
                 { name: "Payments Engine", href: "#" },
                 { name: "Radar (Fraud protection)", href: "#" },
                 { name: "Revenue Recognition", href: "#" },
-                { name: "Roosevelt Sigma Analytics", href: "#" },
+                { name: "elizmey Sigma Analytics", href: "#" },
                 { name: "Subscriptions", href: "#" },
                 { name: "Tax Automation", href: "#" },
                 { name: "POS Terminal", href: "#" },
@@ -132,17 +132,17 @@ export default function Footer() {
         {
             title: "Company",
             links: [
-                { name: "Jobs / Careers", href: "mailto:careers@itsroosevelt.com" },
+                { name: "Jobs / Careers", href: "mailto:siomeyromero@gmail.com" },
                 { name: "Newsroom", href: "#" },
-                { name: "Roosevelt Press Publications", href: "#" },
-                { name: "Business Contact", href: "mailto:business@itsroosevelt.com" }
+                { name: "elizmey Press Publications", href: "#" },
+                { name: "Business Contact", href: "mailto:siomeyromero@gmail.com" }
             ]
         },
         {
             title: "Support",
             links: [
-                { name: "Get Support", href: "mailto:support@itsroosevelt.com" },
-                { name: "Legal", href: "mailto:legal@itsroosevelt.com" },
+                { name: "Get Support", href: "mailto:siomeyromero@gmail.com" },
+                { name: "Legal", href: "mailto:siomeyromero@gmail.com" },
                 { name: "Managed Support Plans", href: "#" },
                 { name: "CA Support: +1 888 926 2289", href: "tel:+18889262289" },
                 { name: "Sign In", href: "/login" }
@@ -152,12 +152,12 @@ export default function Footer() {
             title: "Ecosystem",
             links: [
                 { name: "POS", href: "#" },
-                { name: "Roosevelt", href: "/" },
+                { name: "elizmey", href: "/" },
                 { name: "Royalty Wallet", href: "#" },
                 { name: "Intelligent Glasses", href: "#" },
                 { name: "LUXOR UTILITY ASSET | $LXR", href: "#" },
                 { name: "USDX STABLECOIN ASSET | $USDX", href: "#" },
-                { name: "ROOSEVELT | SUPER INTELLIGENCE", href: "https://www.itsroosevelt.com/", target: "_blank" },
+                { name: "ELIZMEY | MENSAJERÍA AUTOMÁTICA", href: "/", target: "_blank" },
                 { name: "EXCELSIOR REAL WORLD ASSET | $XLS", href: "#" }
             ]
         },
@@ -203,7 +203,7 @@ export default function Footer() {
                     <div className="flex flex-col gap-5 w-full max-w-[440px]">
                         <div className="space-y-1">
                             <h3 className="text-white text-lg font-sans font-light tracking-tight">Newsletter</h3>
-                            <p className="text-white/40 text-xs leading-relaxed font-light">Subscribe to receive the latest Roosevelt ecosystem updates.</p>
+                            <p className="text-white/40 text-xs leading-relaxed font-light">Subscribe to receive the latest elizmey updates.</p>
                         </div>
                         <div className="flex gap-2 w-full">
                             <input
@@ -226,7 +226,7 @@ export default function Footer() {
                     {/* Left Side: Slogan */}
                     <div className="lg:w-1/4">
                         <h2 className="text-2xl md:text-3xl font-sans font-light tracking-tight leading-tight sticky top-24 text-white">
-                            Making <span className="bg-gradient-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent">Roosevelt</span> <br />
+                            Making <span className="bg-gradient-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent">elizmey</span> <br />
                             helpful for <br />
                             everyone
                         </h2>
@@ -374,10 +374,10 @@ export default function Footer() {
                     <div className="flex items-center gap-3 group cursor-default">
                         <img
                             src="/assets/rai-logo-circular.png"
-                            alt="Roosevelt Logo"
+                            alt="elizmey Logo"
                             className="w-12 h-12 md:w-14 md:h-14 object-contain rounded-full brightness-125 filter group-hover:rotate-12 transition-transform duration-500"
                         />
-                        <span className="text-lg font-sans font-medium tracking-tighter">Roosevelt Economy</span>
+                        <span className="text-lg font-sans font-medium tracking-tighter">elizmey</span>
                     </div>
 
                     {/* Secondary Navigation */}
@@ -388,7 +388,7 @@ export default function Footer() {
                         <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
                         <Link href="/data-deletion" className="hover:text-white transition-colors">Data Deletion</Link>
                         <span className="md:ml-4 flex items-center gap-1">
-                            © 2026 Roosevelt made with love <Heart className="w-3 h-3 text-red-500 fill-current" />
+                            © 2026 elizmey made with love <Heart className="w-3 h-3 text-red-500 fill-current" />
                         </span>
                     </div>
 

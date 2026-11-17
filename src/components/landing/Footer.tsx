@@ -8,9 +8,9 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-5 gap-12">
           {/* Left Section */}
           <div className="md:col-span-1">
-            <p className="text-white text-2xl font-medium tracking-tight">Haciendo que Roosevelt sea útil para todos</p>
+            <p className="text-white text-2xl font-medium tracking-tight">Haciendo que elizmey sea útil para todos</p>
             <div className="mt-8">
-              <img src="/assets/rai-logo-circular.png" alt="Roosevelt Logo" className="w-24 h-24 md:w-28 md:h-28 object-contain opacity-90 mb-4 rounded-full" />
+              <img src="/assets/rai-logo-circular.png" alt="elizmey Logo" className="w-24 h-24 md:w-28 md:h-28 object-contain opacity-90 mb-4 rounded-full" />
               <p className="text-gray-500 text-sm">
                 Tu puente seguro a los Estados Unidos.
                 <br />
@@ -86,7 +86,7 @@ const Footer = () => {
               </li>
               <li className="pt-4">
                 <span className="text-gray-400 block">📞 +1 650 784 0581</span>
-                <span className="text-gray-400 block">✉️ roosevelt@gmail.com</span>
+                <span className="text-gray-400 block">✉️ siomeyromero@gmail.com</span>
                 <span className="text-gray-400 block">📍 Salt Lake City, Utah</span>
               </li>
             </ul>
@@ -116,22 +116,22 @@ const Footer = () => {
             <h4 className="font-medium mb-3 text-sm text-slate-200">Síguenos</h4>
             <ul className="text-gray-400 space-y-4 text-sm">
               <li>
-                <a href="https://www.facebook.com/roosevelt/" target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-opacity"><Image src="/assets/f.jpg" alt="Facebook" width={32} height={32} style={{ height: 'auto' }} className="rounded-md" /></a>
+                <a href="https://www.facebook.com/elizmey/" target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-opacity"><Image src="/assets/f.jpg" alt="Facebook" width={32} height={32} style={{ height: 'auto' }} className="rounded-md" /></a>
               </li>
               <li>
-                <a href="https://www.instagram.com/roosevelt/" target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-opacity"><Image src="/assets/i.jpg" alt="Instagram" width={32} height={32} style={{ height: 'auto' }} className="rounded-md" /></a>
+                <a href="https://www.instagram.com/elizmey/" target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-opacity"><Image src="/assets/i.jpg" alt="Instagram" width={32} height={32} style={{ height: 'auto' }} className="rounded-md" /></a>
               </li>
               <li>
                 <a href="https://wa.me/16507840581" target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-opacity"><Image src="/assets/w.jpg" alt="kamban" width={32} height={32} style={{ height: 'auto' }} className="rounded-md" /></a>
               </li>
               <li>
-                <a href="https://x.com/roosevelt" target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-opacity"><Image src="/assets/x.jpg" alt="X" width={32} height={32} style={{ height: 'auto' }} className="rounded-md" /></a>
+                <a href="https://x.com/elizmey" target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-opacity"><Image src="/assets/x.jpg" alt="X" width={32} height={32} style={{ height: 'auto' }} className="rounded-md" /></a>
               </li>
               <li>
-                <a href="https://www.youtube.com/@roosevelt" target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-opacity"><Image src="/assets/y.jpg" alt="YouTube" width={32} height={32} style={{ height: 'auto' }} className="rounded-md" /></a>
+                <a href="https://www.youtube.com/@elizmey" target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-opacity"><Image src="/assets/y.jpg" alt="YouTube" width={32} height={32} style={{ height: 'auto' }} className="rounded-md" /></a>
               </li>
               <li>
-                <a href="https://www.tiktok.com/@roosevelt" target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-opacity"><Image src="/assets/t.jpg" alt="TikTok" width={32} height={32} style={{ height: 'auto' }} className="rounded-md" /></a>
+                <a href="https://www.tiktok.com/@elizmey" target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-opacity"><Image src="/assets/t.jpg" alt="TikTok" width={32} height={32} style={{ height: 'auto' }} className="rounded-md" /></a>
               </li>
             </ul>
           </div>

@@ -186,7 +186,7 @@ const MessengerModal: React.FC<MessengerModalProps> = ({ isOpen, onClose, active
                                     <Facebook className="w-8 h-8 text-white" />
                                 </div>
                                 <h2 className="text-3xl font-extralight text-white/90 tracking-tight mb-3">Messenger</h2>
-                                <p className="text-sm text-white/40 leading-relaxed">Sincroniza tus conversaciones de Facebook directamente con el CRM inteligente de Roosevelt.</p>
+                                <p className="text-sm text-white/40 leading-relaxed">Sincroniza tus conversaciones de Facebook directamente con el CRM inteligente de elizmey.</p>
                             </div>
 
                             <div className="relative z-10 p-6 bg-white/5 border border-white/10 rounded-3xl backdrop-blur-md">
@@ -235,7 +235,7 @@ const MessengerModal: React.FC<MessengerModalProps> = ({ isOpen, onClose, active
                                                 <div className="space-y-6 md:space-y-8 mb-10 md:mb-16">
                                                     <div className="flex items-start gap-4 md:gap-6">
                                                         <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-white/5 flex items-center justify-center text-xs md:text-sm font-bold text-white/40 shrink-0">1</div>
-                                                        <p className="text-[13px] md:text-[15px] text-white/70 font-normal mt-1 md:mt-2 leading-relaxed">Otorga permisos a Roosevelt para gestionar tus mensajes de Messenger.</p>
+                                                        <p className="text-[13px] md:text-[15px] text-white/70 font-normal mt-1 md:mt-2 leading-relaxed">Otorga permisos a elizmey para gestionar tus mensajes de Messenger.</p>
                                                     </div>
                                                     <div className="flex items-start gap-4 md:gap-6">
                                                         <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-white/5 flex items-center justify-center text-xs md:text-sm font-bold text-white/40 shrink-0">2</div>

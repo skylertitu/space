@@ -27,7 +27,7 @@ const translations: Record<Language, Record<string, string>> = {
     'hero.titleLine1': 'Welcome to the',
     'hero.titleLine2': 'new era of autonomy',
     'hero.titleLine3': 'with',
-    'hero.description': 'Stop configuring processes and start delegating results. Roosevelt is the intelligent agent that manages your personal and business infrastructure from end to end.',
+    'hero.description': 'Stop configuring processes and start delegating results. elizmey is the intelligent platform that manages your messaging and automation infrastructure.',
     'nucleo.titleQuestion': 'Which digital asset would you like to work on?',
     'nucleo.titleManagement': 'Digital Asset Management',
     'suite.welcome': 'Welcome Back',
@@ -49,7 +49,7 @@ const translations: Record<Language, Record<string, string>> = {
     'hero.titleLine1': 'Bienvenido a la',
     'hero.titleLine2': 'nueva era de la autonomía',
     'hero.titleLine3': 'con',
-    'hero.description': 'Deja de configurar procesos y comienza a delegar resultados. Roosevelt es el agente inteligente que gestiona tu infraestructura personal y empresarial de principio a fin.',
+    'hero.description': 'Deja de configurar procesos y comienza a delegar resultados. elizmey es la plataforma inteligente que gestiona tu infraestructura de mensajería y automatizaciones.',
     'nucleo.titleQuestion': '¿En qué activo digital te gustaría trabajar?',
     'nucleo.titleManagement': 'Gestión de Activos Digitales',
     'suite.welcome': 'Bienvenido de nuevo',
@@ -64,7 +64,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const stored = localStorage.getItem('roosevelt_lang') as Language;
+    const stored = (localStorage.getItem('elizmey_lang') || localStorage.getItem('roosevelt_lang')) as Language;
     if (stored && (stored === 'es' || stored === 'en')) {
       setLanguageState(stored);
     } else {
@@ -75,7 +75,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
-    localStorage.setItem('roosevelt_lang', lang);
+    localStorage.setItem('elizmey_lang', lang);
   };
 
   const t = (key: string): string => {

@@ -39,7 +39,7 @@ export function CTASection() {
                     <div className="w-64 h-64 md:w-80 md:h-80 relative rounded-3xl overflow-hidden shadow-[0_0_60px_rgba(59,130,246,0.15)] group bg-black">
                         <img
                             src="/assets/rai-logo-circular.png"
-                            alt="Roosevelt Logo"
+                            alt="elizmey Logo"
                             className="w-full h-full object-contain rounded-full group-hover:scale-105 transition-transform duration-500 bg-black"
                         />
                     </div>

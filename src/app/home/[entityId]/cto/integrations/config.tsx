@@ -87,7 +87,7 @@ export const INTEGRATIONS: Integration[] = [
     {
         id: 'telegram',
         name: 'Telegram',
-        description: 'Conecta tu bot de Telegram para gestionar mensajes y automatizaciones directamente desde Roosevelt.',
+        description: 'Conecta tu bot de Telegram para gestionar mensajes y automatizaciones directamente desde elizmey.',
         icon: <TelegramIcon />,
         category: 'Business Messaging',
         popular: true,

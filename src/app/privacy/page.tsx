@@ -1,17 +1,17 @@
 import LegalPage, { type LegalSection } from '@/components/legal/LegalPage';
 
 export const metadata = {
-    title: "Privacy Policy | Roosevelt",
-    description: "How Roosevelt, operated by Luxor Intelligence LLC, collects, uses, shares and protects personal data, and your privacy rights.",
+    title: "Privacy Policy | elizmey",
+    description: "How elizmey collects, uses, shares and protects personal data, and your privacy rights.",
 };
 
 const sections: LegalSection[] = [
     {
         heading: "Who we are and scope",
         body: [
-            "Roosevelt (itsroosevelt.com) is a Super Intelligence (\"SI\") assistant that helps people and businesses manage their communications, customers, marketing, finances and operations. It is operated by Luxor Intelligence LLC, a limited liability company with offices at 470 W 200 N, Salt Lake City, UT 84103, USA (\"Luxor Intelligence\", \"we\", \"us\", \"our\"). Luxor Intelligence also operates other products listed on luxorintelligence.com.",
-            "This Privacy Policy explains how we collect, use, disclose and protect personal data when you use Roosevelt, our websites and related services (together, the \"Service\"). Other products in our ecosystem may publish their own notices on their own websites.",
-            "Contact for privacy matters: legal@itsroosevelt.com.",
+            "elizmey is an intelligent platform that helps people and businesses manage their communications, customers, marketing, finances and operations.",
+            "This Privacy Policy explains how we collect, use, disclose and protect personal data when you use elizmey, our websites and related services (together, the \"Service\").",
+            "Contact for privacy matters: siomeyromero@gmail.com.",
         ],
     },
     {
@@ -20,9 +20,9 @@ const sections: LegalSection[] = [
             "Depending on the data, we act in different roles:",
             [
                 "Controller (or \"business\" under US state laws): for the account, billing, security, usage and website data we collect about you as a user or visitor of the Service.",
-                "Processor (or \"service provider\"): for the content you or your business load into or connect to Roosevelt (\"Customer Data\"), such as your contacts, customer conversations, messages, comments, files and records. In that case you (or your business) are the controller and decide why and how that data is processed; we process it on your instructions to provide the Service.",
+                "Processor (or \"service provider\"): for the content you or your business load into or connect to elizmey (\"Customer Data\"), such as your contacts, customer conversations, messages, comments, files and records. In that case you (or your business) are the controller and decide why and how that data is processed; we process it on your instructions to provide the Service.",
             ],
-            "If you are a business that uses Roosevelt to communicate with your own customers, you are responsible for having a lawful basis, providing the required notices and obtaining the consents (for example for marketing messages) needed to process their data through the Service. A data processing addendum is available on request at legal@itsroosevelt.com.",
+            "If you are a business that uses elizmey to communicate with your own customers, you are responsible for having a lawful basis, providing the required notices and obtaining the consents (for example for marketing messages) needed to process their data through the Service. A data processing addendum is available on request at siomeyromero@gmail.com.",
         ],
     },
     {
@@ -75,7 +75,7 @@ const sections: LegalSection[] = [
     {
         heading: "Super Intelligence (SI) and automated decisions",
         body: [
-            "Roosevelt includes SI-assisted features, which are powered by machine-learning models operated by third-party providers. When you use them, the content you submit (and the context needed to answer, such as relevant conversation or record content you choose to include) is sent to our third-party model providers (for example Google Gemini) to generate a response. We do not ourselves use Customer Data to train generalized models. Our model providers process submitted content under their own terms and privacy policies.",
+            "elizmey includes intelligent features, which are powered by machine-learning models operated by third-party providers. When you use them, the content you submit (and the context needed to answer, such as relevant conversation or record content you choose to include) is sent to our third-party model providers (for example Google Gemini) to generate a response. We do not ourselves use Customer Data to train generalized models. Our model providers process submitted content under their own terms and privacy policies.",
             "SI output is generated automatically by a non-human system; it can be inaccurate, incomplete or inappropriate and should be reviewed before you rely on it or send it to others. We do not use the Service to make decisions that produce legal or similarly significant effects about individuals based solely on automated processing; automations you configure (such as auto-replies, routing or tagging) are controlled by you and are your responsibility. Where applicable law gives you rights regarding automated decision-making, you can contact us to exercise them.",
         ],
     },
@@ -114,7 +114,7 @@ const sections: LegalSection[] = [
                 "Meta Platforms, Google, Telegram and X: when you connect their services (these providers act under their own terms and privacy policies).",
                 "Email and communication tools we use to respond to support, legal and careers requests.",
             ],
-            "We will provide an up-to-date list of sub-processors on request at legal@itsroosevelt.com.",
+            "We will provide an up-to-date list of sub-processors on request at siomeyromero@gmail.com.",
         ],
     },
     {
@@ -139,7 +139,7 @@ const sections: LegalSection[] = [
     {
         heading: "Security",
         body: [
-            "We use technical and organizational measures designed to protect personal data, including per-customer data isolation enforced by database security rules and server-side authorization, encrypted connections (TLS), encryption at rest provided by our infrastructure providers, and access controls for our personnel. No method of transmission or storage is completely secure, and we cannot guarantee absolute security. Please protect your credentials and tell us immediately at support@itsroosevelt.com if you suspect unauthorized access.",
+            "We use technical and organizational measures designed to protect personal data, including per-customer data isolation enforced by database security rules and server-side authorization, encrypted connections (TLS), encryption at rest provided by our infrastructure providers, and access controls for our personnel. No method of transmission or storage is completely secure, and we cannot guarantee absolute security. Please protect your credentials and tell us immediately at siomeyromero@gmail.com if you suspect unauthorized access.",
             "If we become aware of a personal-data breach affecting you, we will notify you and the relevant authorities as required by applicable law, including without undue delay and, where the GDPR applies to us as controller, within 72 hours where feasible. As a processor, we will notify the affected customer without undue delay.",
         ],
     },
@@ -147,7 +147,7 @@ const sections: LegalSection[] = [
         heading: "Your rights (EEA, UK and Switzerland)",
         body: [
             "Subject to conditions and exceptions in the GDPR and UK GDPR, you may have the right to: access your personal data; correct inaccurate data; delete your data; restrict or object to processing (including processing based on legitimate interests and direct marketing); data portability; withdraw consent at any time (without affecting earlier processing); and not to be subject to certain solely automated decisions. You also have the right to lodge a complaint with your local data protection authority.",
-            "To exercise these rights, email legal@itsroosevelt.com. We may need to verify your identity. If your data is Customer Data processed on behalf of a business that uses Roosevelt, we may refer your request to that business.",
+            "To exercise these rights, email siomeyromero@gmail.com. We may need to verify your identity. If your data is Customer Data processed on behalf of a business that uses elizmey, we may refer your request to that business.",
         ],
     },
     {
@@ -160,13 +160,13 @@ const sections: LegalSection[] = [
                 "Sale and sharing: we do not sell personal information and do not share it for cross-context behavioral advertising, and we have no actual knowledge of selling or sharing the personal information of anyone under 16.",
                 "Sensitive personal information: we do not use or disclose sensitive personal information for purposes other than those permitted by law.",
             ],
-            "To exercise your rights, email legal@itsroosevelt.com with the subject \"Privacy request\". We will verify your identity (for example by matching the email associated with your account) and respond within 45 days (extendable once by 45 days where permitted). You may use an authorized agent, who must provide proof of authorization. If we deny a request, you may appeal by replying to our decision, and you may also contact your state attorney general. California residents may also request information about disclosures of personal information to third parties for their direct marketing purposes (California \"Shine the Light\" law); we do not make such disclosures.",
+            "To exercise your rights, email siomeyromero@gmail.com with the subject \"Privacy request\". We will verify your identity (for example by matching the email associated with your account) and respond within 45 days (extendable once by 45 days where permitted). You may use an authorized agent, who must provide proof of authorization. If we deny a request, you may appeal by replying to our decision, and you may also contact your state attorney general. California residents may also request information about disclosures of personal information to third parties for their direct marketing purposes (California \"Shine the Light\" law); we do not make such disclosures.",
         ],
     },
     {
         heading: "Children",
         body: [
-            "The Service is not directed to children under 18 and we do not knowingly collect personal data from them. If you believe a child has provided us with personal data, contact us at legal@itsroosevelt.com and we will delete it.",
+            "The Service is not directed to children under 18 and we do not knowingly collect personal data from them. If you believe a child has provided us with personal data, contact us at siomeyromero@gmail.com and we will delete it.",
         ],
     },
     {
@@ -184,12 +184,9 @@ const sections: LegalSection[] = [
     {
         heading: "Contact us",
         body: [
-            "Luxor Intelligence LLC, 470 W 200 N, Salt Lake City, UT 84103, USA.",
+            "elizmey platform.",
             [
-                "Privacy and legal requests (including our contact for data protection matters): legal@itsroosevelt.com",
-                "Support: support@itsroosevelt.com",
-                "Business inquiries: business@itsroosevelt.com",
-                "Careers: careers@itsroosevelt.com",
+                "Contact and support: siomeyromero@gmail.com",
             ],
             "If we appoint a representative in the European Union or the United Kingdom, their details will be published on this page.",
         ],
@@ -201,7 +198,7 @@ export default function PrivacyPage() {
         <LegalPage
             title="Privacy Policy"
             updated="October 4, 2026"
-            intro="Your privacy matters to us. This Privacy Policy describes what personal data Roosevelt, operated by Luxor Intelligence LLC, collects, how we use and protect it, who we share it with, and the choices and rights you have."
+            intro="Your privacy matters to us. This Privacy Policy describes what personal data elizmey collects, how we use and protect it, who we share it with, and the choices and rights you have."
             sections={sections}
         />
     );

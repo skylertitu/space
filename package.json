@@ -1,7 +1,7 @@
 {
-  "name": "itsroosevelt",
+  "name": "elizmey",
   "version": "1.0.0",
-  "description": "itsroosevelt - Plataforma SaaS Multi-Tenant para Gestión y Automatización de Negocios.",
+  "description": "elizmey - Plataforma de Mensajería Automática y Gestión de Negocios.",
   "main": "index.js",
   "scripts": {
     "dev": "cross-env WATCHPACK_POLLING=true next dev -H 0.0.0.0 -p 3000 --webpack",
@@ -27,7 +27,7 @@
     "firebase",
     "google cloud"
   ],
-  "author": "itsroosevelt",
+  "author": "elizmey",
   "license": "ISC",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.36.3",

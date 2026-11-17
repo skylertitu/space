@@ -28,8 +28,8 @@ const auth = getAuth(app);
 const storage = getStorage(app);
 const functions = getFunctions(app);
 
-// Prueba de Conexión y Confirmación para Roosevelt
-console.log("🚀 [itsroosevelt]: Firebase inicializado correctamente.");
+// Prueba de Conexión y Confirmación para elizmey
+console.log("🚀 [elizmey]: Firebase inicializado correctamente.");
 
 // Export the services
 export { app, db, auth, storage, functions };

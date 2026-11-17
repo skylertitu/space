@@ -676,7 +676,7 @@ async function runEngineCycle(
             // we ensure the engine restarts by setting shouldRestart to true below.
         } else if (!isStartTrigger && !isReset) {
             // If it's not a restart trigger, we might want to stop here (e.g. for simple commands)
-            // But for Roosevelt, we usually want the flow to start.
+            // But for elizmey, we usually want the flow to start.
         }
     }
 

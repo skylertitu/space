@@ -199,12 +199,12 @@ export function HeroAskRooseveltBar() {
                     </AnimatePresence>
                 </div>
 
-                {/* Central Input / Placeholder ("Ask Roosevelt") */}
+                {/* Central Input / Placeholder ("Ask elizmey") */}
                 <input
                     type="text"
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
-                    placeholder="Ask Roosevelt"
+                    placeholder="Ask elizmey"
                     className="flex-1 min-w-0 w-full bg-transparent border-none outline-none focus:ring-0 text-base text-white/90 placeholder:text-white/40 font-semibold px-2 selection:bg-blue-600/30"
                 />
 
@@ -260,7 +260,7 @@ export function HeroAskRooseveltBar() {
                 <button
                     type="button"
                     className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-blue-600 hover:bg-blue-500 transition-all duration-200 hover:scale-105 active:scale-95 shrink-0 border-0 outline-none cursor-pointer"
-                    title="Roosevelt SI"
+                    title="elizmey"
                 />
             </form>
         </div>

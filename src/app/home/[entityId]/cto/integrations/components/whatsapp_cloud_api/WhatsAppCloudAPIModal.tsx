@@ -217,10 +217,10 @@ export function WhatsAppCloudAPIModal({ isOpen, onClose, activeIntegration }: Pr
 
     const tenantWebhookUrl = webhookMeta?.tenantWebhookUrl
         || (currentUser?.uid && activeEntity
-            ? `${typeof window !== 'undefined' ? window.location.origin : 'https://www.itsroosevelt.com'}/api/whatsapp/webhook?u=${currentUser.uid}&e=${activeEntity}`
+            ? `${typeof window !== 'undefined' ? window.location.origin : 'https://elizmey.com'}/api/whatsapp/webhook?u=${currentUser.uid}&e=${activeEntity}`
             : null);
     const globalWebhookUrl = webhookMeta?.globalWebhookUrl
-        || `${typeof window !== 'undefined' ? window.location.origin : 'https://www.itsroosevelt.com'}/api/whatsapp/webhook`;
+        || `${typeof window !== 'undefined' ? window.location.origin : 'https://elizmey.com'}/api/whatsapp/webhook`;
     const displayVerifyToken = waConfig.verifyToken || webhookMeta?.verifyToken || webhookMeta?.recommendedVerifyToken || 'vg37e';
 
     const saveWhatsAppConfig = async () => {
@@ -342,9 +342,9 @@ export function WhatsAppCloudAPIModal({ isOpen, onClose, activeIntegration }: Pr
                                     const phoneNumberId = phone.id;
                                     const displayPhoneNumber = phone.display_phone_number;
 
-                                    toast.loading("Validando exclusividad en Roosevelt...", { id: "meta-auth" });
+                                    toast.loading("Validando exclusividad en elizmey...", { id: "meta-auth" });
 
-                                    // 2. Validate uniqueness across all Roosevelt tenants
+                                    // 2. Validate uniqueness across all elizmey tenants
                                     try {
                                         const validationRes = await fetch('/api/whatsapp/validate-phone-id', {
                                             method: 'POST',
@@ -359,7 +359,7 @@ export function WhatsAppCloudAPIModal({ isOpen, onClose, activeIntegration }: Pr
                                         const validationData = await validationRes.json();
 
                                         if (!validationData.valid) {
-                                            toast.error(validationData.message || "Este número ya está siendo usado por otro usuario de Roosevelt.", { id: "meta-auth" });
+                                            toast.error(validationData.message || "Este número ya está siendo usado por otro usuario de elizmey.", { id: "meta-auth" });
                                             return;
                                         }
 
@@ -662,7 +662,7 @@ export function WhatsAppCloudAPIModal({ isOpen, onClose, activeIntegration }: Pr
                                     <span className="block text-primary font-bold text-xs mt-2 tracking-[0.4em] uppercase opacity-50">Cloud API</span>
                                 </h1>
                                 <p className="text-[11px] text-white/40 font-light leading-relaxed mb-10 tracking-wide max-w-[200px]">
-                                    Conecta la infraestructura de Meta directamente a Roosevelt para una comunicación autónoma y escalable.
+                                    Conecta la infraestructura de Meta directamente a elizmey para una comunicación autónoma y escalable.
                                 </p>
 
                                 <div className="mt-auto">
@@ -911,7 +911,7 @@ export function WhatsAppCloudAPIModal({ isOpen, onClose, activeIntegration }: Pr
                                                         {bspChoice === opt ? <CheckCircle2 className="w-4 h-4" /> : <Circle className="w-3 h-3" />}
                                                     </div>
                                                     <div>
-                                                        <p className="font-bold text-white text-[11px] mb-1 uppercase tracking-[0.2em]">{opt === 'internal' ? 'Cuenta Nativa Roosevelt' : 'BSP Externo (Cloud API)'}</p>
+                                                        <p className="font-bold text-white text-[11px] mb-1 uppercase tracking-[0.2em]">{opt === 'internal' ? 'Cuenta Nativa elizmey' : 'BSP Externo (Cloud API)'}</p>
                                                         {opt === 'other' && (
                                                             <p className="text-[10px] text-white/30 font-light leading-relaxed">Transferencia de WABA desde proveedores como Vonage, Twilio o Messagebird.</p>
                                                         )}
@@ -937,7 +937,7 @@ export function WhatsAppCloudAPIModal({ isOpen, onClose, activeIntegration }: Pr
                                             <div className="flex items-start gap-4">
                                                 <div className="p-2 bg-primary/20 rounded-lg"><AlertCircle className="w-5 h-5 text-primary" /></div>
                                                 <p className="text-[11px] text-white/40 leading-relaxed font-light">
-                                                    Este proceso moverá de forma íntegra tu identidad comercial, límites de mensajería y plantillas aprobadas hacia el control autónomo de Roosevelt.
+                                                    Este proceso moverá de forma íntegra tu identidad comercial, límites de mensajería y plantillas aprobadas hacia el control autónomo de elizmey.
                                                 </p>
                                             </div>
                                         </div>
@@ -977,7 +977,7 @@ export function WhatsAppCloudAPIModal({ isOpen, onClose, activeIntegration }: Pr
                                             <div className="min-w-0">
                                                 <h3 className="text-2xl font-extralight text-white tracking-tighter leading-none mb-1">Números de WhatsApp</h3>
                                                 <p className="text-[10px] text-white/30 uppercase tracking-[0.25em] font-bold">
-                                                    {connectedSlotCount} {connectedSlotCount === 1 ? 'número activo' : 'números activos'} · Red Roosevelt
+                                                    {connectedSlotCount} {connectedSlotCount === 1 ? 'número activo' : 'números activos'} · Red elizmey
                                                 </p>
                                             </div>
                                         </div>
@@ -1132,7 +1132,7 @@ export function WhatsAppCloudAPIModal({ isOpen, onClose, activeIntegration }: Pr
                                                                 }}
                                                                 className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-[9px] font-bold uppercase tracking-widest text-white/70 disabled:opacity-40"
                                                             >
-                                                                {savingVerifyToken ? 'Guardando...' : 'Guardar token en Roosevelt'}
+                                                                {savingVerifyToken ? 'Guardando...' : 'Guardar token en elizmey'}
                                                             </button>
                                                             {tenantWebhookUrl && (
                                                                 <>

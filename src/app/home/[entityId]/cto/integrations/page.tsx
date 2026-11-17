@@ -117,7 +117,7 @@ export default function IntegrationsPage() {
 
     const handleConnect = async (integration: Integration) => {
         if (!['whatsapp', 'messenger', 'instagram', 'telegram', 'x_twitter', 'gmail', 'gemini', 'stripe'].includes(integration.id)) {
-            toast.info(`${integration.name}: Esta integración estará disponible próximamente en Roosevelt.`);
+            toast.info(`${integration.name}: Esta integración estará disponible próximamente en elizmey.`);
             return;
         }
         setActiveIntegration(integration);

@@ -7,7 +7,7 @@ export interface TwitterTenant {
     ourUserId: string;
 }
 
-/** Resolves Roosevelt tenant from X Account Activity payload. */
+/** Resolves elizmey tenant from X Account Activity payload. */
 export async function resolveTwitterTenant(body: Record<string, any>): Promise<TwitterTenant | null> {
     const ourUserId = String(body.for_user_id || '');
     if (!ourUserId) return null;

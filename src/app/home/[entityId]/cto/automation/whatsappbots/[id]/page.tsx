@@ -110,7 +110,7 @@ type ParsedBotImport = {
   edges: Edge[];
 };
 
-/** Acepta JSON exportado por Roosevelt, documento de bot o solo flow { nodes, edges }. */
+/** Acepta JSON exportado por elizmey, documento de bot o solo flow { nodes, edges }. */
 function parseBotImportJson(raw: unknown): ParsedBotImport {
   if (!raw || typeof raw !== 'object') {
     throw new Error('El archivo no contiene un JSON válido.');

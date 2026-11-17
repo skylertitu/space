@@ -14,7 +14,7 @@ export async function GET(req: Request) {
         const { searchParams } = new URL(req.url);
         const userId = searchParams.get('userId');
         const entityId = searchParams.get('entityId');
-        const origin = searchParams.get('origin') || 'https://www.itsroosevelt.com';
+        const origin = searchParams.get('origin') || 'https://elizmey.com';
 
         if (!userId || !entityId) {
             return NextResponse.json(
@@ -25,7 +25,7 @@ export async function GET(req: Request) {
 
         if (userId.includes('TU_UID') || userId.length < 10) {
             return NextResponse.json(
-                { error: 'userId inválido. Debes estar autenticado en Roosevelt.' },
+                { error: 'userId inválido. Debes estar autenticado en elizmey.' },
                 { status: 400 }
             );
         }

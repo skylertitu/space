@@ -71,12 +71,12 @@ const menuData: MenuItemData[] = [
         { title: "Embajadores", desc: "Representa a Udreamms", href: "/contact", icon: Users, colorClass: "text-amber-400 bg-amber-500/10" },
       ],
       socials: [
-        { label: "Facebook", href: "https://www.facebook.com/roosevelt/", imgSrc: "/assets/f.jpg" },
-        { label: "Instagram", href: "https://www.instagram.com/roosevelt/", imgSrc: "/assets/i.jpg" },
+        { label: "Facebook", href: "https://www.facebook.com/elizmey/", imgSrc: "/assets/f.jpg" },
+        { label: "Instagram", href: "https://www.instagram.com/elizmey/", imgSrc: "/assets/i.jpg" },
         { label: "kamban", href: "https://wa.me/16507840581", imgSrc: "/assets/w.jpg" },
-        { label: "X", href: "https://x.com/roosevelt", imgSrc: "/assets/x.jpg" },
-        { label: "YouTube", href: "https://www.youtube.com/@roosevelt", imgSrc: "/assets/y.jpg" },
-        { label: "TikTok", href: "https://www.tiktok.com/@roosevelt", imgSrc: "/assets/t.jpg" },
+        { label: "X", href: "https://x.com/elizmey", imgSrc: "/assets/x.jpg" },
+        { label: "YouTube", href: "https://www.youtube.com/@elizmey", imgSrc: "/assets/y.jpg" },
+        { label: "TikTok", href: "https://www.tiktok.com/@elizmey", imgSrc: "/assets/t.jpg" },
       ]
     }
   },
@@ -134,9 +134,9 @@ export default function Header() {
           <div className="flex items-center gap-12 h-full">
             <Link href="/" className="flex items-center gap-3 z-50 shrink-0 group">
               <div className="w-14 h-14 md:w-16 md:h-16 relative shrink-0">
-                <img src="/assets/rai-logo.png" alt="Roosevelt" className="object-contain w-full h-full transition-transform duration-300" />
+                <img src="/assets/rai-logo.png" alt="elizmey" className="object-contain w-full h-full transition-transform duration-300" />
               </div>
-              <span className="text-xl font-normal tracking-tight text-white">Roosevelt</span>
+              <span className="text-xl font-normal tracking-tight text-white">elizmey</span>
             </Link>
 
             {/* DESKTOP NAV - Ocultar en landings de visa */}

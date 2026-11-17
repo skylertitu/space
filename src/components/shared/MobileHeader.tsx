@@ -62,7 +62,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({ title, layers, onLay
                                     <div className="w-9 h-9 bg-cyan-500/10 border border-cyan-500/30 rounded-xl flex items-center justify-center shadow-[0_0_15px_rgba(6,182,212,0.1)]">
                                         <LayoutGrid size={20} className="text-cyan-400" strokeWidth={1.5} />
                                     </div>
-                                    <span className="text-xl font-light tracking-[0.2em] text-white">ROOSEVELT</span>
+                                    <span className="text-xl font-light tracking-[0.2em] text-white">ELIZMEY</span>
                                 </div>
                                 <button 
                                     onClick={() => setIsOpen(false)}
@@ -114,7 +114,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({ title, layers, onLay
                             <div className="mt-auto pt-6 border-t border-white/5">
                                 <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center justify-between">
                                     <div>
-                                        <p className="text-[9px] font-bold text-white/20 uppercase tracking-widest mb-0.5">Roosevelt OS</p>
+                                        <p className="text-[9px] font-bold text-white/20 uppercase tracking-widest mb-0.5">elizmey</p>
                                         <p className="text-[10px] text-cyan-500/70 font-medium">System v2.4.1 Active</p>
                                     </div>
                                     <div className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse shadow-[0_0_8px_rgba(6,182,212,0.8)]" />

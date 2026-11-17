@@ -59,9 +59,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const loginDemo = () => {
         try {
-            localStorage.setItem('roosevelt_demo_mode', 'true');
-            localStorage.setItem('roosevelt_active_entity', 'mensajeria');
-            localStorage.setItem('roosevelt_active_entity_route', 'mensajeria');
+            localStorage.setItem('elizmey_demo_mode', 'true');
+            localStorage.setItem('elizmey_active_entity', 'mensajeria');
+            localStorage.setItem('elizmey_active_entity_route', 'mensajeria');
         } catch {}
         setCurrentUser(DEMO_USER);
         setActiveEntityState('mensajeria');
@@ -72,6 +72,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const logoutDemo = () => {
         try {
+            localStorage.removeItem('elizmey_demo_mode');
             localStorage.removeItem('roosevelt_demo_mode');
         } catch {}
         setCurrentUser(null);
@@ -82,8 +83,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setActiveEntityState(entityId);
         const route = routeSegment || entityId;
         setActiveEntityRoute(route);
-        localStorage.setItem('roosevelt_active_entity', entityId);
-        localStorage.setItem('roosevelt_active_entity_route', route);
+        localStorage.setItem('elizmey_active_entity', entityId);
+        localStorage.setItem('elizmey_active_entity_route', route);
     };
 
     useEffect(() => {
@@ -93,8 +94,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             return;
         }
 
-        const saved = localStorage.getItem('roosevelt_active_entity');
-        const savedRoute = localStorage.getItem('roosevelt_active_entity_route');
+        const saved = localStorage.getItem('elizmey_active_entity') || localStorage.getItem('roosevelt_active_entity');
+        const savedRoute = localStorage.getItem('elizmey_active_entity_route') || localStorage.getItem('roosevelt_active_entity_route');
         if (saved) {
             setActiveEntityState(saved);
             setActiveEntityRoute(savedRoute || saved);
@@ -106,10 +107,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     useEffect(() => {
         try {
-            if (typeof window !== 'undefined' && localStorage.getItem('roosevelt_demo_mode') === 'true') {
+            const isDemoSaved = localStorage.getItem('elizmey_demo_mode') === 'true' || localStorage.getItem('roosevelt_demo_mode') === 'true';
+            if (typeof window !== 'undefined' && isDemoSaved) {
                 setCurrentUser(DEMO_USER);
-                setActiveEntityState(localStorage.getItem('roosevelt_active_entity') || 'mensajeria');
-                setActiveEntityRoute(localStorage.getItem('roosevelt_active_entity_route') || 'mensajeria');
+                const ent = localStorage.getItem('elizmey_active_entity') || localStorage.getItem('roosevelt_active_entity') || 'mensajeria';
+                const entRoute = localStorage.getItem('elizmey_active_entity_route') || localStorage.getItem('roosevelt_active_entity_route') || 'mensajeria';
+                setActiveEntityState(ent);
+                setActiveEntityRoute(entRoute);
                 setIsDemo(true);
                 setLoading(false);
                 return;
@@ -120,8 +124,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             const unsubscribe = onAuthStateChanged(auth, async (user) => {
                 // Aislamiento en navegadores compartidos: la entidad activa guardada pertenece a un solo usuario.
                 try {
-                    const lastUid = localStorage.getItem('roosevelt_last_uid');
+                    const lastUid = localStorage.getItem('elizmey_last_uid') || localStorage.getItem('roosevelt_last_uid');
                     if (!user || (lastUid && lastUid !== user.uid)) {
+                        localStorage.removeItem('elizmey_active_entity');
+                        localStorage.removeItem('elizmey_active_entity_route');
                         localStorage.removeItem('roosevelt_active_entity');
                         localStorage.removeItem('roosevelt_active_entity_route');
                         if (user) {
@@ -129,8 +135,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                             setActiveEntityRoute('life');
                         }
                     }
-                    if (user) localStorage.setItem('roosevelt_last_uid', user.uid);
-                    else localStorage.removeItem('roosevelt_last_uid');
+                    if (user) {
+                        localStorage.setItem('elizmey_last_uid', user.uid);
+                    } else {
+                        localStorage.removeItem('elizmey_last_uid');
+                        localStorage.removeItem('roosevelt_last_uid');
+                    }
                 } catch { /* localStorage no disponible */ }
 
                 if (user) {

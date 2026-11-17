@@ -16,7 +16,10 @@ export default function SubscriptionGuard({ children }: SubscriptionGuardProps) 
 
   useEffect(() => {
     if (!loading) {
-      const hasBypass = typeof window !== 'undefined' && localStorage.getItem('roosevelt_bypass') === 'roosevelt2025';
+      const hasBypass = typeof window !== 'undefined' && (
+        localStorage.getItem('elizmey_bypass') === 'elizmey2025' ||
+        localStorage.getItem('roosevelt_bypass') === 'roosevelt2025'
+      );
       if (hasBypass) return;
 
       // If no active subscription, redirect to subscriptions page
@@ -31,7 +34,10 @@ export default function SubscriptionGuard({ children }: SubscriptionGuardProps) 
     }
   }, [status, isExpired, loading, router]);
 
-  const hasBypass = typeof window !== 'undefined' && localStorage.getItem('roosevelt_bypass') === 'roosevelt2025';
+  const hasBypass = typeof window !== 'undefined' && (
+    localStorage.getItem('elizmey_bypass') === 'elizmey2025' ||
+    localStorage.getItem('roosevelt_bypass') === 'roosevelt2025'
+  );
 
   if (loading && !hasBypass) {
     return (

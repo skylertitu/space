@@ -18,17 +18,8 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "Roosevelt Super Intelligence",
-  description: `A Next-Generation Super Intelligence (SI) infrastructure designed to act as a unified command center. It's a proactive manager integrating business strategy with personal optimization.
-
-How it works:
-• Total Interconnectivity: Links digital assets, blockchains (like Solana), and admin tools for a real-time 360° view.
-• Predictive Analysis: Detects patterns, financial risks, and crypto opportunities before they become problems.
-• Autonomous Execution: Resolves technical tasks independently, letting you focus on high-level decisions.
-
-Impact Areas: Web3 Ecosystems, Business Direction, and Time Optimization.
-
-It is the bridge between the founder's vision and operational execution, evolving with your business.`,
+  title: "elizmey - Plataforma de Mensajería Automática",
+  description: "Plataforma de automatización de mensajería, chatbots y difusiones masivas omnicanal.",
   icons: {
     icon: [
       { url: "/assets/favicon-32.png", sizes: "32x32", type: "image/png" },
@@ -84,7 +75,7 @@ export default function RootLayout({
               const appId = '${process.env.NEXT_PUBLIC_META_APP_ID}';
               
               if (!appId || appId === 'undefined') {
-                console.warn('🚀 [ROOSEVELT META SDK]: NEXT_PUBLIC_META_APP_ID no configurado.');
+                console.warn('🚀 [ELIZMEY META SDK]: NEXT_PUBLIC_META_APP_ID no configurado.');
                 return;
               }
 
@@ -103,14 +94,14 @@ export default function RootLayout({
                 try {
                   FB.getLoginStatus(function() {
                     window.FB_READY = true;
-                    console.log('🚀 [ROOSEVELT META SDK]: Inicializado.');
+                    console.log('🚀 [ELIZMEY META SDK]: Inicializado.');
                   });
                 } catch (e) {
                   window.FB_READY = true;
                 }
               } else {
                 window.FB_READY = true;
-                console.log('🚀 [ROOSEVELT META SDK]: Inicializado en modo HTTP (Funciones de sesión limitadas).');
+                console.log('🚀 [ELIZMEY META SDK]: Inicializado en modo HTTP (Funciones de sesión limitadas).');
               }
             };
             (function(d, s, id) {

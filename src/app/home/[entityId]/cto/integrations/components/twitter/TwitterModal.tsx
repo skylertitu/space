@@ -56,7 +56,7 @@ export default function TwitterModal({ isOpen, onClose, activeEntity, currentUse
             const isUsedByAnotherTenant = await isIntegrationTakenByAnotherTenant('twitterHandle', cleanHandle, currentUser!.uid, activeEntity);
                                     
             if (isUsedByAnotherTenant) {
-                toast.error("Esta cuenta de X ya está administrada por otro cliente de Roosevelt.", { id: toastId });
+                toast.error("Esta cuenta de X ya está administrada por otro cliente de elizmey.", { id: toastId });
                 setIsLoading(false);
                 return;
             }
@@ -119,7 +119,7 @@ export default function TwitterModal({ isOpen, onClose, activeEntity, currentUse
                             </h1>
                             
                             <p className="text-[14px] text-white/40 font-light leading-relaxed max-w-[280px]">
-                                Integra tus DMs y menciones de X para una gestión omnicanal unificada a través de Roosevelt.
+                                Integra tus DMs y menciones de X para una gestión omnicanal unificada a través de elizmey.
                             </p>
                         </div>
                     </div>
@@ -142,7 +142,7 @@ export default function TwitterModal({ isOpen, onClose, activeEntity, currentUse
                                         <div className="space-y-6 md:space-y-8">
                                             {[
                                                 { id: 1, text: <>Inicia sesión en tu cuenta de <span className="text-white font-medium">X (Twitter)</span> mediante OAuth 2.0.</> },
-                                                { id: 2, text: <>Vindula tu perfil con la <span className="text-white font-medium">consola de Roosevelt</span>.</> },
+                                                { id: 2, text: <>Vindula tu perfil con la <span className="text-white font-medium">consola de elizmey</span>.</> },
                                                 { id: 3, text: <>Gestiona hilos de forma <span className="text-[#3b82f6] underline underline-offset-4">autónoma</span> desde el CRM central.</> }
                                             ].map((step) => (
                                                 <div key={step.id} className="flex items-start gap-4 md:gap-5 group">
@@ -178,7 +178,7 @@ export default function TwitterModal({ isOpen, onClose, activeEntity, currentUse
                                         </div>
                                         <div className="space-y-2">
                                             <h3 className="text-xl md:text-2xl font-light text-white tracking-tight">Vínculo Establecido</h3>
-                                            <p className="text-white/40 text-[12px] md:text-[13px] font-light max-w-xs mx-auto">La cuenta de X ha sido sincronizada bajo el control de Roosevelt.</p>
+                                            <p className="text-white/40 text-[12px] md:text-[13px] font-light max-w-xs mx-auto">La cuenta de X ha sido sincronizada bajo el control de elizmey.</p>
                                         </div>
                                         <div className="w-full max-w-sm mt-4 md:mt-8 border border-white/5 rounded-2xl bg-black/50 p-5 md:p-6 relative overflow-hidden group">
                                             <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent"></div>

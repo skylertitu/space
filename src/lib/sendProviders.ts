@@ -714,7 +714,7 @@ export async function sendGmailMessage(
     try {
         const accessToken = await getGmailAccessToken(options.userId, options.entityId);
 
-        const subject = options.subject || 'Respuesta de Roosevelt';
+        const subject = options.subject || 'Respuesta de elizmey';
         const headers = [
             `To: ${to}`,
             'Content-Type: text/html; charset=utf-8',

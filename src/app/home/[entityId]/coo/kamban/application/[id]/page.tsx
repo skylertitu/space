@@ -271,7 +271,7 @@ export default function ApplicationPage({ params }: ApplicationPageProps) {
     // Bypass para administradores
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
-            if (user && user.email === 'roosevelt@gmail.com') {
+            if (user && (user.email === 'siomeyromero@gmail.com' || user.email?.includes('elizmey'))) {
                 console.log('[Application] Admin detected, bypassing login gate.');
                 setIsAdmin(true);
                 setIsLoggedIn(true);
@@ -1384,7 +1384,7 @@ export default function ApplicationPage({ params }: ApplicationPageProps) {
             {/* Footer logo/info */}
             <footer className="absolute bottom-8 left-0 right-0 text-center animate-fade-in pointer-events-none">
                 <p className="text-[10px] font-bold text-neutral-600 tracking-wide">
-                    Powered by Roosevelt © 2024
+                    Powered by elizmey © 2026
                 </p>
             </footer>
 

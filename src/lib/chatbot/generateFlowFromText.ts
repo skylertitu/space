@@ -76,7 +76,7 @@ REGLAS DE EDGES:
 - Español natural para mensajes`;
 
 function buildFullPrompt(script: string): string {
-    return `Eres un generador de flujos para chatbots de WhatsApp en Roosevelt.
+    return `Eres un generador de flujos para chatbots de WhatsApp en elizmey.
 Convierte el guion del usuario en un JSON válido con nodos React Flow y conexiones ejecutables.
 
 ${NODE_RULES}
@@ -113,7 +113,7 @@ Se eliminaron los nodos posteriores al seleccionado. Genera SOLO los nodos NUEVO
             : `MODO: extend
 Conserva el flujo existente. Genera SOLO nodos NUEVOS para agregar DESPUÉS del nodo seleccionado.`;
 
-    return `Eres un editor de flujos para chatbots WhatsApp en Roosevelt.
+    return `Eres un editor de flujos para chatbots WhatsApp en elizmey.
 
 ${modeHint}
 

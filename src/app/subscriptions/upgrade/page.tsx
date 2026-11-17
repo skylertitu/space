@@ -96,7 +96,7 @@ const plans = [
     priceUSD: 49.99,
     lxrPrice: '$37.49',
     lxrPriceUSD: 37.49,
-    description: 'Initial access to start operating within Roosevelt.',
+    description: 'Initial access to start operating within elizmey.',
     features: ['1 active workspace', 'Base dashboard', 'Essential support'],
     accent: 'border-white/10 bg-white/[0.03]',
     highlighted: false,
@@ -387,8 +387,8 @@ export default function SubscriptionUpgradePage() {
 
                       {plan.isEnterprise ? (
                         <a
-                          href={`mailto:business@itsroosevelt.com?subject=${encodeURIComponent(
-                            `Enterprise upgrade inquiry — ${currentUser?.email || 'Roosevelt user'}`
+                          href={`mailto:siomeyromero@gmail.com?subject=${encodeURIComponent(
+                            `Enterprise upgrade inquiry — ${currentUser?.email || 'elizmey user'}`
                           )}`}
                           className="mt-auto"
                         >

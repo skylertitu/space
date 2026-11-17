@@ -1,28 +1,28 @@
 import LegalPage, { type LegalSection } from '@/components/legal/LegalPage';
 
 export const metadata = {
-    title: "Terms of Service | Roosevelt",
-    description: "The terms that govern the use of Roosevelt, operated by Luxor Intelligence LLC.",
+    title: "Terms of Service | elizmey",
+    description: "The terms that govern the use of elizmey.",
 };
 
 const sections: LegalSection[] = [
     {
         heading: "Agreement",
         body: [
-            "These Terms of Service (\"Terms\") are a legal agreement between you and Luxor Intelligence LLC, 470 W 200 N, Salt Lake City, UT 84103, USA (\"Luxor Intelligence\", \"we\", \"us\", \"our\") that governs your access to and use of Roosevelt (itsroosevelt.com) and related websites, applications and services (the \"Service\"). By creating an account, clicking to accept, or using the Service, you agree to these Terms and to our Privacy Policy. If you do not agree, do not use the Service. Other products in our ecosystem may have their own terms on their websites.",
+            "These Terms of Service (\"Terms\") govern your access to and use of elizmey and related websites, applications and services (the \"Service\"). By creating an account, clicking to accept, or using the Service, you agree to these Terms and to our Privacy Policy. If you do not agree, do not use the Service.",
         ],
     },
     {
         heading: "Eligibility and accounts",
         body: [
             "You must be at least 18 years old and able to form a binding contract, and you must not be barred from using the Service under applicable law. If you use the Service on behalf of an organization, you represent that you have authority to bind it, and \"you\" includes that organization.",
-            "You must provide accurate information, keep it up to date and keep your credentials secure. You are responsible for all activity under your account and for the actions of anyone you allow to access it. Notify us promptly at support@itsroosevelt.com of any unauthorized use. You may create personal and business profiles; you are responsible for the accuracy and legality of the information in each.",
+            "You must provide accurate information, keep it up to date and keep your credentials secure. You are responsible for all activity under your account and for the actions of anyone you allow to access it. Notify us promptly at siomeyromero@gmail.com of any unauthorized use. You may create personal and business profiles; you are responsible for the accuracy and legality of the information in each.",
         ],
     },
     {
         heading: "The Service",
         body: [
-            "Roosevelt lets you create personal and business profiles and manage communications, customers, marketing, finance and operations, including by connecting third-party channels and using SI-assisted features. We may add, modify, suspend or discontinue features at any time. Some modules are provided as previews, templates or mock-ups and may be incomplete or change without notice.",
+            "elizmey lets you create personal and business profiles and manage communications, customers, marketing, finance and operations, including by connecting third-party channels and using SI-assisted features. We may add, modify, suspend or discontinue features at any time. Some modules are provided as previews, templates or mock-ups and may be incomplete or change without notice.",
         ],
     },
     {
@@ -35,7 +35,7 @@ const sections: LegalSection[] = [
         heading: "Your content and data",
         body: [
             "You retain all rights in the content and data you submit, connect or generate through the Service (\"Customer Data\"). You grant us a worldwide, non-exclusive license to host, store, process, transmit, display and otherwise use Customer Data solely to provide, secure, support and improve the Service as described in the Privacy Policy and as you instruct.",
-            "You are solely responsible for Customer Data and for its legality, including having all notices, rights, authorizations and consents required to collect it and to contact the people you message through the Service (including under laws on privacy, electronic marketing, telemarketing and spam such as the TCPA, CAN-SPAM, GDPR and ePrivacy rules). For Customer Data that is personal data, our data protection terms are described in the Privacy Policy, and a data processing addendum is available on request at legal@itsroosevelt.com.",
+            "You are solely responsible for Customer Data and for its legality, including having all notices, rights, authorizations and consents required to collect it and to contact the people you message through the Service (including under laws on privacy, electronic marketing, telemarketing and spam such as the TCPA, CAN-SPAM, GDPR and ePrivacy rules). For Customer Data that is personal data, our data protection terms are described in the Privacy Policy, and a data processing addendum is available on request at siomeyromero@gmail.com.",
             "We may create aggregated or de-identified data that does not identify you or any individual and use it to operate and improve the Service.",
         ],
     },
@@ -67,20 +67,20 @@ const sections: LegalSection[] = [
         heading: "Plans, payments, taxes and cancellation",
         body: [
             "Paid plans are billed in advance through Stripe or via supported on-chain payments, at the price shown at checkout. Fees are in US dollars unless stated otherwise and exclude taxes, duties and payment-network or blockchain fees, which you are responsible for. Where a card fee is passed on to the customer, it is shown at checkout.",
-            "Subscriptions paid by card renew automatically for the same period (monthly or annual) until cancelled: we charge the card on file about one day before the period ends and, if the charge fails, we retry for a short grace period (currently up to three days) before access is suspended. Subscriptions paid on-chain (Solana) do not renew automatically and must be paid again to continue. You can cancel at any time from your account or by contacting support@itsroosevelt.com; cancellation takes effect at the end of the current billing period and you keep access until then. Except where required by law or stated at purchase, fees are non-refundable and we do not provide refunds or credits for partial periods or unused features. We may change prices or plans with at least 30 days' notice for future billing periods; if you do not cancel before the change takes effect, you accept it.",
+            "Subscriptions paid by card renew automatically for the same period (monthly or annual) until cancelled: we charge the card on file about one day before the period ends and, if the charge fails, we retry for a short grace period (currently up to three days) before access is suspended. Subscriptions paid on-chain (Solana) do not renew automatically and must be paid again to continue. You can cancel at any time from your account or by contacting siomeyromero@gmail.com; cancellation takes effect at the end of the current billing period and you keep access until then. Except where required by law or stated at purchase, fees are non-refundable and we do not provide refunds or credits for partial periods or unused features. We may change prices or plans with at least 30 days' notice for future billing periods; if you do not cancel before the change takes effect, you accept it.",
             "On-chain transactions are irreversible and you are responsible for transaction details, wallet security and applicable fees. We may suspend or limit the Service for unpaid or disputed charges, and you are responsible for chargebacks and the costs of collection. Free trials, promotions and credits (if any) are subject to their specific terms.",
         ],
     },
     {
         heading: "Intellectual property and feedback",
         body: [
-            "The Service, including software, models, interfaces, content, trademarks and logos, is owned by Luxor Intelligence LLC or its licensors and is protected by intellectual-property laws. Subject to these Terms, we grant you a limited, revocable, non-exclusive, non-transferable, non-sublicensable right to access and use the Service for your internal business or personal purposes. We reserve all rights not expressly granted. If you give us feedback or suggestions, you grant us a perpetual, irrevocable, worldwide, royalty-free license to use them without obligation to you.",
+            "The Service, including software, models, interfaces, content, trademarks and logos, is owned by elizmey or its licensors and is protected by intellectual-property laws. Subject to these Terms, we grant you a limited, revocable, non-exclusive, non-transferable, non-sublicensable right to access and use the Service for your internal business or personal purposes. We reserve all rights not expressly granted. If you give us feedback or suggestions, you grant us a perpetual, irrevocable, worldwide, royalty-free license to use them without obligation to you.",
         ],
     },
     {
         heading: "Copyright and takedown notices",
         body: [
-            "We respect intellectual-property rights. If you believe content on the Service infringes your copyright, send a notice with the information required by 17 U.S.C. § 512(c)(3) (identification of the work, the infringing material and its location, your contact details, a good-faith statement and a statement under penalty of perjury that you are authorized to act) to legal@itsroosevelt.com. We may remove allegedly infringing content and terminate repeat infringers.",
+            "We respect intellectual-property rights. If you believe content on the Service infringes your copyright, send a notice with the information required by 17 U.S.C. § 512(c)(3) (identification of the work, the infringing material and its location, your contact details, a good-faith statement and a statement under penalty of perjury that you are authorized to act) to siomeyromero@gmail.com. We may remove allegedly infringing content and terminate repeat infringers.",
         ],
     },
     {
@@ -128,23 +128,21 @@ const sections: LegalSection[] = [
     {
         heading: "Informal resolution, governing law and venue",
         body: [
-            "Before filing a claim, you agree to contact us at legal@itsroosevelt.com and try to resolve the dispute informally for at least 30 days. These Terms and any dispute relating to them or the Service are governed by the laws of the jurisdiction in which Luxor Intelligence LLC is organized, excluding its conflict-of-laws rules, and disputes that are not resolved informally will be brought in the competent courts of that jurisdiction, to whose jurisdiction you consent, except where mandatory consumer-protection law of your place of residence gives you non-waivable rights to bring claims elsewhere.",
+            "Before filing a claim, you agree to contact us at siomeyromero@gmail.com and try to resolve the dispute informally for at least 30 days.",
         ],
     },
     {
         heading: "General",
         body: [
-            "These Terms and the documents they reference are the entire agreement between you and us about the Service and supersede prior agreements on the same subject. If a provision is unenforceable, the rest remains in effect. Our failure to enforce a provision is not a waiver. You may not assign these Terms without our consent; we may assign them in connection with a merger, acquisition or sale of assets. Neither party is liable for delays or failures caused by events beyond its reasonable control. We may send notices to the email associated with your account or post them in the Service; notices to us go to legal@itsroosevelt.com. These Terms are written in English, which controls over any translation. There are no third-party beneficiaries except as stated. We may update these Terms by posting the new version with a new date; material changes will be notified in advance where required, and continued use after the effective date means you accept them.",
+            "These Terms and the documents they reference are the entire agreement between you and us about the Service and supersede prior agreements on the same subject. If a provision is unenforceable, the rest remains in effect. Our failure to enforce a provision is not a waiver. You may not assign these Terms without our consent; we may assign them in connection with a merger, acquisition or sale of assets. Neither party is liable for delays or failures caused by events beyond its reasonable control. We may send notices to the email associated with your account or post them in the Service; notices to us go to siomeyromero@gmail.com. These Terms are written in English, which controls over any translation. There are no third-party beneficiaries except as stated. We may update these Terms by posting the new version with a new date; material changes will be notified in advance where required, and continued use after the effective date means you accept them.",
         ],
     },
     {
         heading: "Contact",
         body: [
-            "Luxor Intelligence LLC, 470 W 200 N, Salt Lake City, UT 84103, USA.",
+            "elizmey platform.",
             [
-                "Legal: legal@itsroosevelt.com",
-                "Support: support@itsroosevelt.com",
-                "Business inquiries: business@itsroosevelt.com",
+                "Contact: siomeyromero@gmail.com",
             ],
         ],
     },
@@ -155,7 +153,7 @@ export default function TermsPage() {
         <LegalPage
             title="Terms of Service"
             updated="October 4, 2026"
-            intro="Please read these Terms carefully. They form a legal agreement between you and Luxor Intelligence LLC for the use of Roosevelt."
+            intro="Please read these Terms carefully. They form a legal agreement between you and elizmey."
             sections={sections}
         />
     );

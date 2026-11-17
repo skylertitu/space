@@ -150,23 +150,23 @@ const plans: PlanConfig[] = [
       {
         iconType: 'email',
         boldText: 'Custom business email',
-        normalText: ', you@your-company.com + Roosevelt SI assistant in Mail',
+        normalText: ', you@your-company.com + elizmey SI assistant in Mail',
       },
       {
         iconType: 'suite',
-        boldText: 'Full suite of Roosevelt apps',
+        boldText: 'Full suite of elizmey apps',
         normalText: ', including Mail, Calendar, Chat, Drive, Docs, Sheets, and Sites',
       },
       {
         iconType: 'ai',
-        boldText: 'Chat with SI in the Roosevelt app',
+        boldText: 'Chat with SI in the elizmey app',
         normalText: 'with enterprise-grade security & privacy, your company data is ',
         highlightText: 'not used to train models',
       },
       {
         iconType: 'workflow',
         boldText: 'Create SI-powered workflows',
-        normalText: 'across Roosevelt apps to automate everyday work',
+        normalText: 'across elizmey apps to automate everyday work',
       },
       {
         iconType: 'check',
@@ -181,7 +181,7 @@ const plans: PlanConfig[] = [
       {
         iconType: 'check',
         boldText: 'Generate and edit content with SI',
-        normalText: 'in Roosevelt Creator & Vids',
+        normalText: 'in elizmey Creator & Vids',
       },
       {
         iconType: 'check',
@@ -222,7 +222,7 @@ const plans: PlanConfig[] = [
       },
       {
         iconType: 'ai',
-        boldText: 'Chat with SI in the Roosevelt app',
+        boldText: 'Chat with SI in the elizmey app',
         normalText: 'with additional access to advanced reasoning models',
       },
       {
@@ -242,13 +242,13 @@ const plans: PlanConfig[] = [
       },
       {
         iconType: 'notebook',
-        boldText: 'Roosevelt Notebook SI',
+        boldText: 'elizmey Notebook SI',
         normalText: 'research and thinking partner with expanded access',
       },
       {
         iconType: 'check',
         boldText: 'Data migration tool',
-        normalText: 'to move emails, contacts, and files seamlessly to Roosevelt',
+        normalText: 'to move emails, contacts, and files seamlessly to elizmey',
       },
     ],
   },
@@ -350,7 +350,7 @@ const plans: PlanConfig[] = [
       },
       {
         iconType: 'check',
-        boldText: 'SI Classification for Roosevelt Drive',
+        boldText: 'SI Classification for elizmey Drive',
         normalText: 'and sensitive document labeling',
       },
       {
@@ -642,7 +642,7 @@ function SubscriptionsContent() {
                       const emailBody = encodeURIComponent("Hello, I am interested in an Enterprise plan for my business.");
                       return (
                         <a
-                          href={`https://mail.google.com/mail/?view=cm&fs=1&to=business@itsroosevelt.com&su=${emailSubject}&body=${emailBody}`}
+                          href={`https://mail.google.com/mail/?view=cm&fs=1&to=siomeyromero@gmail.com&su=${emailSubject}&body=${emailBody}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="w-full block"
@@ -774,10 +774,10 @@ function SubscriptionsContent() {
             {/* Bottom Disclaimers */}
             <div className="mx-auto w-full max-w-[92rem] mt-6 px-4 space-y-2 text-[11px] text-white/40 leading-relaxed">
               <p>
-                Business Starter, Business Standard, and Business Pro plans can be purchased for a maximum of 300 users. There is no minimum or maximum user limit for Enterprise plans. Roosevelt customers may have access to additional features for a limited promotional period.
+                Business Starter, Business Standard, and Business Pro plans can be purchased for a maximum of 300 users. There is no minimum or maximum user limit for Enterprise plans. elizmey customers may have access to additional features for a limited promotional period.
               </p>
               <p>
-                *Roosevelt provides flexible pooled storage per user that is shared across the organization. Starter includes 30 GB pooled storage per user, Standard includes 2 TB, Pro and Enterprise include 5 TB. Contact support to learn more about getting additional storage for your organization.
+                *elizmey provides flexible pooled storage per user that is shared across the organization. Starter includes 30 GB pooled storage per user, Standard includes 2 TB, Pro and Enterprise include 5 TB. Contact support to learn more about getting additional storage for your organization.
               </p>
             </div>
 

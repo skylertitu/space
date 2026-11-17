@@ -23,9 +23,9 @@ export function InnovationSection() {
 
     return (
         <InfoSection 
-            title="What exactly is Roosevelt?"
-            subtitle="Roosevelt is a Next-Generation Super Intelligence (SI) infrastructure designed to act as a unified command center. It is the bridge between strategy and operational execution, evolving with your business."
-            description="By using Roosevelt, you don't just use an SI agent; you gain superpowers within our network:"
+            title="What exactly is elizmey?"
+            subtitle="elizmey is an intelligent infrastructure designed to act as a unified command center. It is the bridge between strategy and operational execution, evolving with your business."
+            description="By using elizmey, you gain superpowers within our network:"
             items={items}
             imageSrc="/assets/rai-logo-circular.png"
             imageClassName="object-contain p-12"

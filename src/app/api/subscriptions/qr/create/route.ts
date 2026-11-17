@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
       amount: serverAmountUi,
       splToken: config.mint,
       reference,
-      label: `Roosevelt ${String(plan).toUpperCase()} Subscription`,
+      label: `elizmey ${String(plan).toUpperCase()} Subscription`,
       message: 'Scan with Phantom to complete your subscription payment',
       memo: `subscription:${requestId}`,
     });

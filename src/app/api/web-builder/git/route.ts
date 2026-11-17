@@ -202,7 +202,7 @@ export async function POST(req: Request) {
                 // 1. Initialize Git in tmp path
                 await execAsync('git init', { cwd: tmpPath });
                 await execAsync('git config user.name "Web Builder"', { cwd: tmpPath });
-                await execAsync('git config user.email "builder@roosevelt.com"', { cwd: tmpPath });
+                await execAsync('git config user.email "siomeyromero@gmail.com"', { cwd: tmpPath });
                 await execAsync('git branch -M main', { cwd: tmpPath });
                 await execAsync(`git remote add origin ${effectiveRepoUrl}`, { cwd: tmpPath });
 

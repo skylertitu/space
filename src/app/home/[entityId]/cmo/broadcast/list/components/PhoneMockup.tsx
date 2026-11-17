@@ -57,7 +57,7 @@ export default function PhoneMockup({
                         R
                     </div>
                     <div className="min-w-0">
-                        <p className="text-[11px] font-semibold truncate leading-tight">Roosevelt Bot</p>
+                        <p className="text-[11px] font-semibold truncate leading-tight">elizmey Bot</p>
                         <p className="text-[8px] text-neutral-500 leading-none">Online</p>
                     </div>
                 </div>

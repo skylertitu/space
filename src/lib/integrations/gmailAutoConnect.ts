@@ -1,6 +1,6 @@
 import type { User } from 'firebase/auth';
 
-const BOOTSTRAP_KEY = 'roosevelt_gmail_bootstrap';
+const BOOTSTRAP_KEY = 'elizmey_gmail_bootstrap';
 
 export type GmailBootstrapPayload = {
     userId: string;

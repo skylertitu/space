@@ -153,7 +153,7 @@ export default function TelegramModal({ isOpen, onClose, activeEntity, currentUs
                             </h1>
                             
                             <p className="text-[14px] text-white/40 font-light leading-relaxed max-w-[280px]">
-                                Vincula tu bot de Telegram para gestión masiva y automatizada de audiencias a través de Roosevelt.
+                                Vincula tu bot de Telegram para gestión masiva y automatizada de audiencias a través de elizmey.
                             </p>
                         </div>
                     </div>
@@ -181,7 +181,7 @@ export default function TelegramModal({ isOpen, onClose, activeEntity, currentUs
                                                 Paso 1: Crear tu Bot Oficial
                                             </h3>
                                             <p className="text-white/60 text-[12px] md:text-[14px] leading-relaxed mb-6 md:mb-8 max-w-sm">
-                                                Para proteger tu privacidad, Roosevelt no accede a tu cuenta personal. Debes crear un "Bot" que actuará como tu asistente oficial.
+                                                Para proteger tu privacidad, elizmey no accede a tu cuenta personal. Debes crear un "Bot" que actuará como tu asistente oficial.
                                             </p>
                                             
                                             <div className="space-y-4 md:space-y-6">
@@ -258,7 +258,7 @@ export default function TelegramModal({ isOpen, onClose, activeEntity, currentUs
                                         </div>
                                         <div className="space-y-2">
                                             <h3 className="text-xl md:text-2xl font-light text-white tracking-tight">Vínculo Establecido</h3>
-                                            <p className="text-white/40 text-[12px] md:text-[13px] font-light max-w-xs mx-auto">El nodo de Telegram ha sido sincronizado bajo el control central de Roosevelt.</p>
+                                            <p className="text-white/40 text-[12px] md:text-[13px] font-light max-w-xs mx-auto">El nodo de Telegram ha sido sincronizado bajo el control central de elizmey.</p>
                                         </div>
                                         <div className="w-full max-w-sm mt-4 md:mt-8 border border-white/5 rounded-2xl bg-black/50 p-5 md:p-6 relative overflow-hidden group">
                                             <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[#26A5E4]/30 to-transparent"></div>

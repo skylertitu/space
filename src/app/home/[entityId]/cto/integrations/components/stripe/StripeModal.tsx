@@ -177,7 +177,7 @@ export default function StripeModal({ isOpen, onClose, activeEntity, currentUser
                                     Stripe
                                 </h1>
                                 <p className="max-w-[280px] text-[14px] font-light leading-relaxed text-white/40">
-                                    Conecta tu cuenta para que Roosevelt lea pagos, teléfonos y correos
+                                    Conecta tu cuenta para que elizmey lea pagos, teléfonos y correos
                                     capturados en el checkout y automatice el acceso por WhatsApp.
                                 </p>
                             </div>

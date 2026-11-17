@@ -65,7 +65,7 @@ const InstagramModal: React.FC<InstagramModalProps> = ({ isOpen, onClose, active
     const handleConnectInstagram = async () => {
         if (isLocalHttp) {
             toast.error(
-                'Facebook Login requiere HTTPS. Usa https://www.itsroosevelt.com/.../integrations o la conexión manual abajo.',
+                'Facebook Login requiere HTTPS. Usa https://elizmey.com/.../integrations o la conexión manual abajo.',
                 { duration: 8000 }
             );
             setShowManualConnect(true);
@@ -321,12 +321,12 @@ const InstagramModal: React.FC<InstagramModalProps> = ({ isOpen, onClose, active
                                                             <strong>Estás en localhost (HTTP).</strong> Meta no permite FB.login sin HTTPS.
                                                             Opciones: conectar en{' '}
                                                             <a
-                                                                href={`https://www.itsroosevelt.com/home/${entityId}/cto/integrations`}
+                                                                href={`https://elizmey.com/home/${entityId}/cto/integrations`}
                                                                 className="underline text-amber-200"
                                                                 target="_blank"
                                                                 rel="noopener noreferrer"
                                                             >
-                                                                producción (itsroosevelt.com)
+                                                                producción (elizmey.com)
                                                             </a>{' '}
                                                             o usar conexión manual abajo.
                                                         </p>

@@ -29,17 +29,17 @@ const site = (path: string) => `${LUXOR_SITE}${path}`;
 const OWN_IDS = ['product', 'infrastructure', 'build'] as const;
 export const isOwnMenu = (id: MenuId) => (OWN_IDS as readonly string[]).includes(id);
 
-// Textos de los menús propios de Roosevelt (Producto, Infraestructura, Desarrollo).
+// Textos de los menús propios de elizmey (Producto, Infraestructura, Desarrollo).
 export const OWN_MENU_TEXT = {
     en: {
-        product: { label: 'Product', title: 'Product', intro: 'The principles and impact behind Roosevelt Super Intelligence.' },
-        infrastructure: { label: 'Infrastructure', title: 'Infrastructure', intro: 'The capabilities and the intelligence that power Roosevelt.' },
-        build: { label: 'Build', title: 'Build', intro: 'Start your project with Roosevelt and learn how it works.' },
+        product: { label: 'Product', title: 'Product', intro: 'The principles and impact behind elizmey.' },
+        infrastructure: { label: 'Infrastructure', title: 'Infrastructure', intro: 'The capabilities and the intelligence that power elizmey.' },
+        build: { label: 'Build', title: 'Build', intro: 'Start your project with elizmey and learn how it works.' },
     },
     es: {
-        product: { label: 'Producto', title: 'Producto', intro: 'Los principios y el impacto detrás de Roosevelt Super Intelligence.' },
-        infrastructure: { label: 'Infraestructura', title: 'Infraestructura', intro: 'Las capacidades y la inteligencia que impulsan a Roosevelt.' },
-        build: { label: 'Desarrollo', title: 'Desarrollo', intro: 'Comienza tu proyecto con Roosevelt y aprende cómo funciona.' },
+        product: { label: 'Producto', title: 'Producto', intro: 'Los principios y el impacto detrás de elizmey.' },
+        infrastructure: { label: 'Infraestructura', title: 'Infraestructura', intro: 'Las capacidades y la inteligencia que impulsan a elizmey.' },
+        build: { label: 'Desarrollo', title: 'Desarrollo', intro: 'Comienza tu proyecto con elizmey y aprende cómo funciona.' },
     },
 } as const;
 
@@ -49,19 +49,19 @@ export function getMegaMenus(lang: MenuLang): Record<MenuId, MegaMenuItem[]> {
     const es = lang === 'es';
     return {
         product: [
-            { icon: ShieldCheck, title: es ? 'Responsabilidad' : 'Responsibility', desc: es ? 'Cómo diseñamos Roosevelt con seguridad y confianza.' : 'How we design Roosevelt with security and trust.', href: '#responsibility', local: true },
-            { icon: Impact, title: es ? 'Impacto Social' : 'Social Impact', desc: es ? 'El efecto de Roosevelt en las personas y los negocios.' : 'Roosevelt’s effect on people and businesses.', href: '#impact', local: true },
+            { icon: ShieldCheck, title: es ? 'Responsabilidad' : 'Responsibility', desc: es ? 'Cómo diseñamos elizmey con seguridad y confianza.' : 'How we design elizmey with security and trust.', href: '#responsibility', local: true },
+            { icon: Impact, title: es ? 'Impacto Social' : 'Social Impact', desc: es ? 'El efecto de elizmey en las personas y los negocios.' : 'elizmey’s effect on people and businesses.', href: '#impact', local: true },
         ],
         infrastructure: [
-            { icon: Layers, title: es ? 'Funciones' : 'Features', desc: es ? 'Todo lo que Roosevelt puede hacer por ti.' : 'Everything Roosevelt can do for you.', href: '#features', local: true },
-            { icon: Brain, title: es ? 'Cerebro' : 'Brain', desc: es ? 'La Super Inteligencia que coordina tus operaciones.' : 'The Super Intelligence that coordinates your operations.', href: '#brain', local: true },
+            { icon: Layers, title: es ? 'Funciones' : 'Features', desc: es ? 'Todo lo que elizmey puede hacer por ti.' : 'Everything elizmey can do for you.', href: '#features', local: true },
+            { icon: Brain, title: es ? 'Cerebro' : 'Brain', desc: es ? 'La inteligencia que coordina tus operaciones.' : 'The intelligence that coordinates your operations.', href: '#brain', local: true },
         ],
         build: [
             { icon: Launch, title: es ? 'Comenzar Proyecto' : 'Start Project', desc: es ? 'Crea tu cuenta y tu primer perfil.' : 'Create your account and your first profile.', href: '/login?register=true', local: true },
-            { icon: BookOpen, title: es ? 'Documentación' : 'Documentation', desc: es ? 'Guías para sacarle el máximo a Roosevelt.' : 'Guides to get the most out of Roosevelt.', href: '#docs', local: true },
+            { icon: BookOpen, title: es ? 'Documentación' : 'Documentation', desc: es ? 'Guías para sacarle el máximo a elizmey.' : 'Guides to get the most out of elizmey.', href: '#docs', local: true },
         ],
         project: [
-            { icon: Info, title: lang === 'es' ? 'Nosotros' : 'About', desc: lang === 'es' ? 'Conoce Roosevelt Super Intelligence.' : 'Get to know Roosevelt Super Intelligence.', href: '#about', local: true },
+            { icon: Info, title: lang === 'es' ? 'Nosotros' : 'About', desc: lang === 'es' ? 'Conoce elizmey.' : 'Get to know elizmey.', href: '#about', local: true },
             { icon: Sparkles, title: t.team, desc: m.team_desc, href: site('/team') },
             { icon: Route, title: t.roadmap, desc: m.eco_desc_3, href: site('/roadmap') },
             { icon: BookOpen, title: t.docs, desc: m.eco_desc_2, href: site('/coming-soon') },
@@ -116,7 +116,7 @@ export const ECOSYSTEM_ASSETS = [
     { image: `${ECO}lxr_logo.png?alt=media&token=6c98c336-e417-4b75-8d5c-729233c5097b`, title: 'LUXOR UTILITY ASSET | $LXR', href: 'https://luxorstandard.com/' },
     { image: `${ECO}WhatsApp%20Image%202026-07-27%20at%209.35.45%20AM.jpeg?alt=media&token=b09d84e7-061b-45e6-972b-f02d3cbb19dc`, title: 'EXCELSIOR REAL WORLD ASSET | $XLS', href: 'https://excelsiorstandard.com/' },
     { image: `${ECO}WhatsApp%20Image%202026-07-09%20at%209.44.56%20AM.jpeg?alt=media&token=531b81b9-652c-4aa0-8652-c2de6c531e6e`, title: 'STABLECOIN | $USDX', href: 'https://occidentstandard.com/' },
-    { image: `${ECO}rai-logo.jpg?alt=media&token=a091e66f-596e-451b-bd46-b3672d352d9e`, title: 'ROOSEVELT SUPER INTELLIGENCE', href: 'https://www.itsroosevelt.com/' },
+    { image: `${ECO}rai-logo.jpg?alt=media&token=a091e66f-596e-451b-bd46-b3672d352d9e`, title: 'ELIZMEY', href: '/' },
     { image: `${ECO}WhatsApp%20Image%202026-08-23%20at%207.04.34%20AM.jpeg?alt=media&token=e577ab9e-4bde-465f-9d0c-b3f7ae93961c`, title: 'ROYALTY | DIGITAL FINANCIAL INSTITUTION', href: 'https://itsroyalty.us/' },
     { image: `${ECO}WhatsApp%20Image%202026-07-09%20at%209.44.55%20AM%20(1).jpeg?alt=media&token=88e66557-972f-4081-8583-fd1f772d83b9`, title: 'STERLING | MULTISIG - TOKEN LAUNCHER - PAYMENT GATEWAY', href: 'https://itssterling.com/' },
     { image: `${ECO}cropped_circle_image%20(2).png?alt=media&token=ca8a774d-be5d-4e3c-911a-7301f04a661d`, title: 'THE NEW GRAN COLOMBIA', href: 'https://itspormi.com/' },

@@ -237,7 +237,7 @@ function LoginContent() {
               {/* Preserved animated title greeting */}
               <div className="text-center px-2 max-w-xl mx-auto flex flex-col gap-2 justify-center mb-2">
                 {(isRegistering 
-                  ? ["I'm Roosevelt, and I'm ready to get to work for you"]
+                  ? ["I'm elizmey, and I'm ready to get to work for you"]
                   : ["Welcome back! I’ve been keeping everything ready for you"]
                 ).map((line, lineIndex) => (
                   <div

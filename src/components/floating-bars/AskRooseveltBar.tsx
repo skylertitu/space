@@ -70,7 +70,7 @@ export function AskRooseveltBar() {
                         transition={{ duration: 0.15, ease: "easeOut" }}
                         onClick={() => setIsExpanded(true)}
                         className="flex items-center justify-center p-2 text-white/60 hover:text-white transition-colors cursor-pointer outline-none group"
-                        title="Abrir Ask Roosevelt"
+                        title="Abrir Ask elizmey"
                     >
                         <ChevronUp className="w-4.5 h-4.5 text-white/60 group-hover:text-white transition-colors" />
                     </motion.button>
@@ -240,7 +240,7 @@ export function AskRooseveltBar() {
                             type="text"
                             value={inputValue}
                             onChange={(e) => setInputValue(e.target.value)}
-                            placeholder="Ask Roosevelt"
+                            placeholder="Ask elizmey"
                             className="flex-1 bg-transparent border-none outline-none focus:ring-0 text-sm text-white/90 placeholder:text-white/40 font-light px-2 selection:bg-blue-600/30"
                         />
 
@@ -286,7 +286,7 @@ export function AskRooseveltBar() {
                         <button
                             type="button"
                             className="w-9 h-9 rounded-full bg-blue-600 hover:bg-blue-500 transition-all duration-200 hover:scale-105 active:scale-95 shrink-0 border-0 outline-none cursor-pointer"
-                            title="Roosevelt SI"
+                            title="elizmey"
                         />
 
                         {/* Botón para ocultar barra: Integrada literalmente dentro de la barra */}

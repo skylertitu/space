@@ -129,7 +129,7 @@ export default function ProfileEditPage() {
                         </div>
                         <div className="flex flex-col">
                             <span className="text-sm font-bold tracking-tight text-white/90">{displayName || 'Identity'}</span>
-                            <span className="text-[10px] text-white/30 tracking-widest uppercase font-medium">{currentUser.email?.split('@')[0]} | Roosevelt ID</span>
+                            <span className="text-[10px] text-white/30 tracking-widest uppercase font-medium">{currentUser.email?.split('@')[0]} | elizmey ID</span>
                         </div>
                     </div>
                     <Button 
@@ -233,7 +233,7 @@ export default function ProfileEditPage() {
                     {/* Footer Info & Button */}
                     <div className="pt-12 flex flex-col items-center gap-12">
                         <p className="text-[9px] text-white/20 text-center leading-loose max-w-lg">
-                            Cierta información del perfil, como tu nombre, presentación y enlaces, es visible para todos en la red de Roosevelt. Consulta qué <span className="text-blue-500 underline cursor-pointer">información del perfil es visible</span>.
+                            Cierta información del perfil, como tu nombre, presentación y enlaces, es visible para todos en la red de elizmey. Consulta qué <span className="text-blue-500 underline cursor-pointer">información del perfil es visible</span>.
                         </p>
                         <Button 
                             onClick={handleSave}

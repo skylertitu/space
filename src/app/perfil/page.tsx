@@ -208,7 +208,7 @@ export default function ProfileViewPage() {
 
             {/* Footer Branding */}
             <div className="mt-32 text-center opacity-10">
-                <span className="text-[8px] font-black tracking-[1em] uppercase">Roosevelt Identity Core (Alpha Phase)</span>
+                <span className="text-[8px] font-black tracking-[1em] uppercase">elizmey Identity Core (Alpha Phase)</span>
             </div>
 
         </div>

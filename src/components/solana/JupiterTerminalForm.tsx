@@ -46,7 +46,7 @@ export default function JupiterTerminalForm() {
       <div className="p-4 bg-gray-900/60 backdrop-blur-md border-b border-gray-800">
          <h3 className="text-xl font-bold font-inter text-center text-white">Adquirir Tokens de Acceso</h3>
          <p className="text-xs text-center text-gray-400 mt-2 tracking-wide leading-relaxed">
-           Convierte tu liquidez en SOL o USDC para activar tu suscripción de Roosevelt utilizando el Swap descentralizado.
+           Convierte tu liquidez en SOL o USDC para activar tu suscripción de elizmey utilizando el Swap descentralizado.
          </p>
       </div>
       

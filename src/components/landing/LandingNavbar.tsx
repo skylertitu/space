@@ -49,7 +49,7 @@ export const LandingNavbar = () => {
             />
             <div className="flex flex-col">
               <span className="text-xl sm:text-2xl font-bold tracking-tight text-white leading-none">
-                Roosevelt
+                elizmey
               </span>
               <span className="text-[10px] sm:text-xs text-blue-400 font-medium tracking-wider uppercase mt-1 flex items-center gap-1">
                 <MessageSquare className="w-3 h-3" />
@@ -100,7 +100,7 @@ export const LandingNavbar = () => {
             <div className="flex justify-between items-center mb-8">
               <div className="flex items-center gap-2">
                 <img src="/assets/rai-logo.png" alt="Logo" className="w-8 h-8 object-contain" />
-                <span className="text-lg font-bold text-white">Roosevelt Mensajería</span>
+                <span className="text-lg font-bold text-white">elizmey Mensajería</span>
               </div>
               <button 
                 onClick={() => setIsMobileMenuOpen(false)}

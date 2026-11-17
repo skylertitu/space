@@ -18,7 +18,7 @@ export default function LegalPage({
     return (
         <main className="min-h-screen bg-black text-white/80 px-6 pt-20 pb-24 font-[var(--font-outfit)]">
             <article className="max-w-3xl mx-auto">
-                <Link href="/" className="text-sm text-white/40 hover:text-white transition-colors">← Roosevelt</Link>
+                <Link href="/" className="text-sm text-white/40 hover:text-white transition-colors">← elizmey</Link>
                 <h1 className="mt-8 text-white text-4xl md:text-5xl font-medium tracking-tight">{title}</h1>
                 <p className="mt-3 text-sm text-white/40">Last updated: {updated}</p>
                 <p className="mt-8 leading-relaxed">{intro}</p>

@@ -173,7 +173,7 @@ export default function VoiceCenterPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     messages: [
-                        { role: 'system', content: 'You are Roosevelt SI, a professional business assistant. Respond concisely in the same language as the user. Keep responses under 3 sentences for voice output.' },
+                        { role: 'system', content: 'You are elizmey, a professional business assistant. Respond concisely in the same language as the user. Keep responses under 3 sentences for voice output.' },
                         ...history.map(h => ({ role: h.role, content: h.text })),
                         { role: 'user', content: text.trim() }
                     ],
@@ -249,7 +249,7 @@ export default function VoiceCenterPage() {
                         </div>
                         <h1 className="text-3xl md:text-4xl font-medium tracking-tight">Voice SI Center</h1>
                         <p className="text-neutral-500 mt-2 text-sm max-w-lg">
-                            Real-time voice interaction with Roosevelt SI. Speak naturally and receive intelligent responses.
+                            Real-time voice interaction with elizmey. Speak naturally and receive intelligent responses.
                         </p>
                     </div>
                     <div className="flex gap-2">
@@ -371,7 +371,7 @@ export default function VoiceCenterPage() {
                                         <Mic className="w-8 h-8 text-white/10" />
                                     </div>
                                     <p className="text-sm">Start speaking to begin a conversation</p>
-                                    <p className="text-xs text-neutral-700 max-w-sm">Your voice input will be transcribed and sent to Roosevelt SI for intelligent responses.</p>
+                                    <p className="text-xs text-neutral-700 max-w-sm">Your voice input will be transcribed and sent to elizmey for intelligent responses.</p>
                                 </div>
                             ) : (
                                 history.map((entry) => (

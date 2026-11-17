@@ -121,6 +121,10 @@ function LoginContent() {
     e.preventDefault();
     setLoading(true);
     try {
+      try {
+        localStorage.removeItem('elizmey_demo_mode');
+        localStorage.removeItem('roosevelt_demo_mode');
+      } catch {}
       if (isRegistering) {
         await createUserWithEmailAndPassword(auth, email, password);
         toast.success('Cuenta creada exitosamente');
@@ -138,6 +142,10 @@ function LoginContent() {
   const handleSocialLogin = async (provider: any, providerName: string) => {
     setLoading(true);
     try {
+      try {
+        localStorage.removeItem('elizmey_demo_mode');
+        localStorage.removeItem('roosevelt_demo_mode');
+      } catch {}
       const result = await signInWithPopup(auth, provider);
       if (providerName === 'Google' && result.user) {
         const { queueGmailBootstrap } = await import('@/lib/integrations/gmailAutoConnect');

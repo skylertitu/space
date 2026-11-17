@@ -107,43 +107,28 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     useEffect(() => {
         try {
-            const isDemoSaved = localStorage.getItem('elizmey_demo_mode') === 'true' || localStorage.getItem('roosevelt_demo_mode') === 'true';
-            if (typeof window !== 'undefined' && isDemoSaved) {
-                setCurrentUser(DEMO_USER);
-                const ent = localStorage.getItem('elizmey_active_entity') || localStorage.getItem('roosevelt_active_entity') || 'mensajeria';
-                const entRoute = localStorage.getItem('elizmey_active_entity_route') || localStorage.getItem('roosevelt_active_entity_route') || 'mensajeria';
-                setActiveEntityState(ent);
-                setActiveEntityRoute(entRoute);
-                setIsDemo(true);
-                setLoading(false);
-                return;
-            }
-        } catch {}
-
-        try {
             const unsubscribe = onAuthStateChanged(auth, async (user) => {
-                // Aislamiento en navegadores compartidos: la entidad activa guardada pertenece a un solo usuario.
-                try {
-                    const lastUid = localStorage.getItem('elizmey_last_uid') || localStorage.getItem('roosevelt_last_uid');
-                    if (!user || (lastUid && lastUid !== user.uid)) {
-                        localStorage.removeItem('elizmey_active_entity');
-                        localStorage.removeItem('elizmey_active_entity_route');
-                        localStorage.removeItem('roosevelt_active_entity');
-                        localStorage.removeItem('roosevelt_active_entity_route');
-                        if (user) {
+                if (user) {
+                    setIsDemo(false);
+                    try {
+                        localStorage.removeItem('elizmey_demo_mode');
+                        localStorage.removeItem('roosevelt_demo_mode');
+                    } catch {}
+
+                    // Aislamiento en navegadores compartidos: la entidad activa guardada pertenece a un solo usuario.
+                    try {
+                        const lastUid = localStorage.getItem('elizmey_last_uid') || localStorage.getItem('roosevelt_last_uid');
+                        if (lastUid && lastUid !== user.uid) {
+                            localStorage.removeItem('elizmey_active_entity');
+                            localStorage.removeItem('elizmey_active_entity_route');
+                            localStorage.removeItem('roosevelt_active_entity');
+                            localStorage.removeItem('roosevelt_active_entity_route');
                             setActiveEntityState('life');
                             setActiveEntityRoute('life');
                         }
-                    }
-                    if (user) {
                         localStorage.setItem('elizmey_last_uid', user.uid);
-                    } else {
-                        localStorage.removeItem('elizmey_last_uid');
-                        localStorage.removeItem('roosevelt_last_uid');
-                    }
-                } catch { /* localStorage no disponible */ }
+                    } catch { /* localStorage no disponible */ }
 
-                if (user) {
                     try {
                         const userDocRef = doc(db, 'users', user.uid);
                         const docSnap = await getDoc(userDocRef);
@@ -231,7 +216,30 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                         console.error("Error creating isolated user document:", error);
                     }
                 }
-                setCurrentUser(user);
+                if (user) {
+                    setCurrentUser(user);
+                    setIsDemo(false);
+                } else {
+                    let isDemoSaved = false;
+                    try {
+                        isDemoSaved = typeof window !== 'undefined' && (
+                            localStorage.getItem('elizmey_demo_mode') === 'true' ||
+                            localStorage.getItem('roosevelt_demo_mode') === 'true'
+                        );
+                    } catch {}
+
+                    if (isDemoSaved) {
+                        setCurrentUser(DEMO_USER);
+                        const ent = localStorage.getItem('elizmey_active_entity') || localStorage.getItem('roosevelt_active_entity') || 'mensajeria';
+                        const entRoute = localStorage.getItem('elizmey_active_entity_route') || localStorage.getItem('roosevelt_active_entity_route') || 'mensajeria';
+                        setActiveEntityState(ent);
+                        setActiveEntityRoute(entRoute);
+                        setIsDemo(true);
+                    } else {
+                        setCurrentUser(null);
+                        setIsDemo(false);
+                    }
+                }
                 setLoading(false);
             });
             return unsubscribe;

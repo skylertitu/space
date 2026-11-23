@@ -7,7 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useEntityRoute } from '@/hooks/useEntityRoute';
 import { db } from '@/lib/firebase';
 import { doc, setDoc, deleteDoc, onSnapshot, collection, query, where, getDocs, updateDoc } from 'firebase/firestore';
-import { claimIntegration } from '@/lib/integrations/claimClient';
+import { claimIntegration, releaseIntegration } from '@/lib/integrations/claimClient';
 import { metaLoginOptions } from '@/lib/integrations/metaLogin';
 import { getWhatsAppIntegrationHealth } from '@/lib/omnichannel/whatsappIntegrationStatus';
 import { WhatsAppReadinessPanel } from './WhatsAppReadinessPanel';
@@ -50,7 +50,14 @@ export function WhatsAppCloudAPIModal({ isOpen, onClose, activeIntegration }: Pr
 
     // Meta Wizard States
     const [wizardPath, setWizardPath] = useState<'new' | 'existing' | null>(null);
-    const [connectionMode, setConnectionMode] = useState<'meta' | 'manual'>('meta');
+    const [connectionMode, setConnectionMode] = useState<'meta' | 'manual'>('manual');
+    const [discoveredNumbers, setDiscoveredNumbers] = useState<Array<{
+        phoneNumberId: string;
+        displayPhoneNumber: string;
+        verifiedName: string;
+        wabaId: string;
+    }>>([]);
+    const [discovering, setDiscovering] = useState(false);
     const [accountAction, setAccountAction] = useState<'new' | 'existing'>('new');
     const [phoneStatus, setPhoneStatus] = useState<'new' | 'personal' | 'none' | null>(null);
     const [bspChoice, setBspChoice] = useState<'internal' | 'other' | null>(null);
@@ -234,8 +241,8 @@ export function WhatsAppCloudAPIModal({ isOpen, onClose, activeIntegration }: Pr
             accessToken: validateField('accessToken', waConfig.accessToken) ? '' : formErrors.accessToken,
         };
 
-        if (Object.values(errors).some(e => e !== '') || !waConfig.phoneNumberId) {
-            toast.error("Revisa los campos marcados en rojo.");
+        if (Object.values(errors).some(e => e !== '') || !waConfig.phoneNumberId || !waConfig.accessToken.trim().startsWith('EAA')) {
+            toast.error("Necesitas el ID del número y un token permanente de Meta (empieza por EAA).");
             return;
         }
 
@@ -253,14 +260,12 @@ export function WhatsAppCloudAPIModal({ isOpen, onClose, activeIntegration }: Pr
             });
             const validationData = await validationRes.json();
 
-            if (!validationData.valid) {
+            if (validationData.valid === false) {
                 toast.error(validationData.message || "El número ya está vinculado a otra cuenta.", { id: "wa-config" });
                 return;
             }
         } catch (error) {
             console.error("Validation error:", error);
-            toast.error("Hubo un problema verificando el número.", { id: "wa-config" });
-            return;
         }
 
         toast.loading("Guardando configuración...", { id: "wa-config" });
@@ -284,14 +289,27 @@ export function WhatsAppCloudAPIModal({ isOpen, onClose, activeIntegration }: Pr
                 }),
             });
 
+            const tenantPath = `users/${currentUser.uid}/entities/${activeEntity}`;
+            await saveSlotConnection(tenantPath, 'broadcast', {
+                phoneNumberId: waConfig.phoneNumberId.trim(),
+                wabaId: waConfig.wabaId.trim(),
+                accessToken: waConfig.accessToken.trim(),
+                displayPhoneNumber: waConfig.displayPhoneNumber.trim(),
+            }).catch((err) => console.error('[WhatsApp] No se pudo marcar el número para difusiones', err));
+
             const claim = await claimIntegration('whatsapp', currentUser.uid, activeEntity);
-            if (!claim.ok) {
+            if (!claim.ok && (claim.reason === 'not_owner' || claim.reason === 'conflict')) {
                 await updateDoc(configRef, { status: 'Disconnected' });
                 toast.error(claim.message, { id: "wa-config" });
                 return;
             }
 
-            toast.success("¡WhatsApp conectado!", { id: "wa-config" });
+            toast.success(
+                claim.ok
+                    ? "Número de empresa conectado. Ya puedes usarlo en Difusiones."
+                    : "Número guardado. Puedes usarlo en Difusiones; la verificación con Meta quedó pendiente.",
+                { id: "wa-config" }
+            );
             setIsEditing(false);
             setStep(4);
         } catch (error) {
@@ -363,8 +381,13 @@ export function WhatsAppCloudAPIModal({ isOpen, onClose, activeIntegration }: Pr
                                             return;
                                         }
 
+                                        if (!currentUser?.uid || !activeEntity) {
+                                            toast.error('Entra con tu cuenta antes de conectar WhatsApp.', { id: 'meta-auth' });
+                                            return;
+                                        }
+
                                         // 3. Save full configuration if valid
-                                        const configRef = doc(db, `users/${currentUser?.uid}/entities/${activeEntity}/integrations/whatsapp`);
+                                        const configRef = doc(db, `users/${currentUser.uid}/entities/${activeEntity}/integrations/whatsapp`);
                                         const configDoc = {
                                             status: 'Connected',
                                             provider: 'whatsapp',
@@ -378,16 +401,19 @@ export function WhatsAppCloudAPIModal({ isOpen, onClose, activeIntegration }: Pr
                                         };
 
                                         await setDoc(configRef, configDoc, { merge: true });
-                                        await fetch('/api/whatsapp/validate-phone-id', {
-                                            method: 'POST',
-                                            headers: { 'Content-Type': 'application/json' },
-                                            body: JSON.stringify({
-                                                phoneNumberId,
-                                                userId: currentUser?.uid,
-                                                entityId: activeEntity,
-                                            }),
-                                        });
-                                        toast.success("¡Vinculación oficial completada!", { id: "meta-auth" });
+                                        await saveSlotConnection(`users/${currentUser.uid}/entities/${activeEntity}`, 'broadcast', {
+                                            phoneNumberId: String(phoneNumberId),
+                                            wabaId: String(wabaId),
+                                            accessToken,
+                                            displayPhoneNumber: String(displayPhoneNumber || ''),
+                                        }).catch(() => {});
+                                        const claim = await claimIntegration('whatsapp', currentUser.uid, activeEntity);
+                                        if (!claim.ok && (claim.reason === 'not_owner' || claim.reason === 'conflict')) {
+                                            await updateDoc(configRef, { status: 'Disconnected' });
+                                            toast.error(claim.message, { id: "meta-auth" });
+                                            return;
+                                        }
+                                        toast.success("Número de empresa conectado. Ya puedes usarlo en Difusiones.", { id: "meta-auth" });
                                         setStep(4);
                                     } catch (err) {
                                         console.error("Duplicate check error:", err);
@@ -418,6 +444,10 @@ export function WhatsAppCloudAPIModal({ isOpen, onClose, activeIntegration }: Pr
 
         const _unused_toastId = toast.loading("Desconectando...", { id: "wa-config" });
         try {
+            const phoneId = waConfig.phoneNumberId;
+            if (phoneId) {
+                await releaseIntegration('whatsapp', currentUser.uid, activeEntity, phoneId);
+            }
             const configRef = doc(db, `users/${currentUser.uid}/entities/${activeEntity}/integrations/whatsapp`);
             const internalConfigRef = doc(db, `users/${currentUser.uid}/entities/${activeEntity}/integrations/whatsapp_internal`);
 
@@ -508,6 +538,12 @@ export function WhatsAppCloudAPIModal({ isOpen, onClose, activeIntegration }: Pr
                 accessToken: slotForm.accessToken.trim(),
                 displayPhoneNumber: slotForm.displayPhoneNumber.trim(),
             });
+            const claim = await claimIntegration('whatsapp', currentUser.uid, activeEntity, { slot: editingSlot });
+            if (!claim.ok) {
+                await disconnectSlot(tenantPath, editingSlot);
+                toast.error(claim.message, { id: 'wa-slot' });
+                return;
+            }
             toast.success('Número conectado.', { id: 'wa-slot' });
             setEditingSlot(null);
         } catch (error) {
@@ -523,6 +559,10 @@ export function WhatsAppCloudAPIModal({ isOpen, onClose, activeIntegration }: Pr
         if (!confirm('¿Desconectar este número?')) return;
         const tenantPath = `users/${currentUser.uid}/entities/${activeEntity}`;
         try {
+            const phoneId = slotConnections[slot]?.phoneNumberId;
+            if (phoneId) {
+                await releaseIntegration('whatsapp', currentUser.uid, activeEntity, phoneId);
+            }
             await disconnectSlot(tenantPath, slot);
             toast.success('Número desconectado.');
         } catch (error) {
@@ -531,13 +571,58 @@ export function WhatsAppCloudAPIModal({ isOpen, onClose, activeIntegration }: Pr
         }
     };
 
+    const discoverBusinessNumbers = async () => {
+        if (!currentUser?.uid) return;
+        if (!waConfig.accessToken.trim().startsWith('EAA')) {
+            toast.error('Pega primero el token permanente de Meta. Empieza por EAA.');
+            return;
+        }
+        setDiscovering(true);
+        try {
+            const res = await fetch('/api/whatsapp/list-numbers', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    accessToken: waConfig.accessToken.trim(),
+                    wabaId: waConfig.wabaId.trim(),
+                    userId: currentUser.uid,
+                }),
+            });
+            const data = await res.json();
+            if (!res.ok || !data.ok) {
+                setDiscoveredNumbers([]);
+                toast.error(data.message || 'No se pudieron leer los números de la cuenta.');
+                return;
+            }
+            setDiscoveredNumbers(data.numbers || []);
+            toast.success(`${data.numbers.length} número${data.numbers.length === 1 ? '' : 's'} de empresa.`);
+        } catch {
+            toast.error('No se pudieron leer los números de la cuenta.');
+        } finally {
+            setDiscovering(false);
+        }
+    };
+
+    const pickBusinessNumber = (number: { phoneNumberId: string; displayPhoneNumber: string; wabaId: string }) => {
+        const display = number.displayPhoneNumber.trim().startsWith('+')
+            ? number.displayPhoneNumber.trim()
+            : `+${number.displayPhoneNumber.replace(/\D/g, '')}`;
+        setWaConfig((prev) => ({
+            ...prev,
+            phoneNumberId: number.phoneNumberId,
+            wabaId: number.wabaId || prev.wabaId,
+            displayPhoneNumber: display,
+        }));
+        setFormErrors({});
+    };
+
     const renderManualForm = () => (
         <div className="flex-1 flex flex-col pt-2 overflow-y-auto pr-2 no-scrollbar">
             <div className="space-y-5 mb-8 text-left">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <div className="flex justify-between px-1">
-                            <label className="text-[9px] font-black uppercase tracking-widest text-neutral-500">PHONE ID (15 DÍGITOS)</label>
+                            <label className="text-[9px] font-black uppercase tracking-widest text-neutral-500">ID DEL NÚMERO EN META</label>
                             <a href="https://developers.facebook.com/apps/" target="_blank" rel="noreferrer" className="text-[8px] text-blue-500 font-bold uppercase italic tracking-tighter">¿DÓNDE ENCONTRARLO?</a>
                         </div>
                         <input
@@ -604,6 +689,37 @@ export function WhatsAppCloudAPIModal({ isOpen, onClose, activeIntegration }: Pr
                     />
                     {formErrors.accessToken && <p className="text-[8px] text-red-500 mt-1 font-bold italic pl-1">{formErrors.accessToken}</p>}
                 </div>
+
+                <button
+                    type="button"
+                    onClick={discoverBusinessNumbers}
+                    disabled={discovering}
+                    className="w-full h-11 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-300 hover:bg-emerald-500/20 disabled:opacity-50"
+                >
+                    {discovering ? 'Buscando números...' : 'Buscar números de esta cuenta'}
+                </button>
+
+                {discoveredNumbers.length > 0 && (
+                    <div className="space-y-2">
+                        <p className="text-[9px] font-bold uppercase tracking-widest text-neutral-500 px-1">Elige el número de empresa</p>
+                        {discoveredNumbers.map((number) => {
+                            const selected = waConfig.phoneNumberId === number.phoneNumberId;
+                            return (
+                                <button
+                                    key={number.phoneNumberId}
+                                    type="button"
+                                    onClick={() => pickBusinessNumber(number)}
+                                    className={`w-full text-left px-4 py-3 rounded-xl border transition-all ${selected ? 'border-emerald-500/50 bg-emerald-500/10' : 'border-white/10 bg-white/[0.02] hover:border-white/20'}`}
+                                >
+                                    <p className="text-sm text-white">{number.displayPhoneNumber || number.phoneNumberId}</p>
+                                    <p className="text-[10px] text-white/40 mt-0.5">
+                                        {number.verifiedName || 'WhatsApp Business'} · {number.phoneNumberId}
+                                    </p>
+                                </button>
+                            );
+                        })}
+                    </div>
+                )}
             </div>
 
 
@@ -631,7 +747,7 @@ export function WhatsAppCloudAPIModal({ isOpen, onClose, activeIntegration }: Pr
                     onClick={saveWhatsAppConfig}
                     className="w-full h-14 bg-blue-600 hover:bg-blue-500 text-white font-black uppercase text-[10px] tracking-widest rounded-2xl transition-all shadow-lg shadow-blue-600/20 active:scale-95"
                 >
-                    GUARDAR Y CONECTAR
+                    CONECTAR NÚMERO
                 </button>
             )}
         </div>
@@ -713,13 +829,13 @@ export function WhatsAppCloudAPIModal({ isOpen, onClose, activeIntegration }: Pr
                                             onClick={() => setConnectionMode('meta')}
                                             className={`px-4 md:px-6 py-1 md:py-1.5 rounded-full text-[8px] md:text-[9px] font-black uppercase tracking-[0.2em] transition-all ${connectionMode === 'meta' ? 'bg-white/10 text-white shadow-lg' : 'text-white/30 hover:text-white/60'}`}
                                         >
-                                            Wizard
+                                            Asistente
                                         </button>
                                         <button
                                             onClick={() => setConnectionMode('manual')}
                                             className={`px-4 md:px-6 py-1 md:py-1.5 rounded-full text-[8px] md:text-[9px] font-black uppercase tracking-[0.2em] transition-all ${connectionMode === 'manual' ? 'bg-white/10 text-white shadow-lg' : 'text-white/30 hover:text-white/60'}`}
                                         >
-                                            Manual
+                                            Número
                                         </button>
                                     </div>
                                 )}
@@ -750,8 +866,8 @@ export function WhatsAppCloudAPIModal({ isOpen, onClose, activeIntegration }: Pr
                                         {isEditing || connectionMode === 'manual' ? (
                                             <>
                                                 <div className="mb-4 md:mb-6">
-                                                    <h3 className="text-xl md:text-2xl font-extralight text-white tracking-tighter mb-1">{isEditing ? 'Configuración de Nodo' : 'Mapeo Manual de WhatsApp'}</h3>
-                                                    <p className="text-[9px] md:text-[10px] text-white/30 uppercase tracking-[0.3em] font-bold">Inyección Directa de Credenciales</p>
+                                                    <h3 className="text-xl md:text-2xl font-extralight text-white tracking-tighter mb-1">{isEditing ? 'Editar número' : 'Número de empresa'}</h3>
+                                                    <p className="text-[9px] md:text-[10px] text-white/40 leading-relaxed">Pega el token de la cuenta de WhatsApp Business, busca sus números y conecta el que enviará las difusiones.</p>
                                                 </div>
                                                 {renderManualForm()}
                                             </>

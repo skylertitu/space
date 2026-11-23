@@ -1,15 +1,13 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Carousel } from './components/Carousel';
-import { Wallet, Fingerprint, FileCheck, Gem } from 'lucide-react';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { IdentitySwitcher } from '@/components/IdentitySwitcher';
 import { useAuth } from '@/contexts/AuthContext';
 import { db } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
-import { PersonaDashboard } from './_persona/PersonaDashboard';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 const LetterByLetterText = ({ text, delayOffset = 0 }: { text: string, delayOffset?: number }) => {
@@ -64,17 +62,9 @@ const LetterByLetterText = ({ text, delayOffset = 0 }: { text: string, delayOffs
     );
 };
 
-const informationItems = [
-    { href: '#wallets', icon: Wallet, label: 'Wallets' },
-    { href: '#ein', icon: Fingerprint, label: 'EIN' },
-    { href: '#licenses', icon: FileCheck, label: 'Licenses' },
-    { href: '#activos', icon: Gem, label: 'Assets' },
-];
-
 export default function SuiteDashboard() {
     const { activeEntity, currentUser } = useAuth();
     const { t, setLanguage } = useLanguage();
-    const [entityType, setEntityType] = useState<string | null>(null);
     const [loadingEntity, setLoadingEntity] = useState(true);
 
     useEffect(() => {
@@ -84,22 +74,15 @@ export default function SuiteDashboard() {
     useEffect(() => {
         async function fetchEntityType() {
             if (!currentUser || !activeEntity) return;
-            if (currentUser.uid.startsWith('demo') || activeEntity === 'mensajeria') {
-                setEntityType('empresa');
+            if (currentUser.uid.startsWith('demo') || activeEntity === 'mensajeria' || activeEntity === 'personal' || activeEntity === 'life') {
                 setLoadingEntity(false);
                 return;
             }
             try {
                 const docRef = doc(db, `users/${currentUser.uid}/entities/${activeEntity}`);
-                const snap = await getDoc(docRef);
-                if (snap.exists()) {
-                    setEntityType(snap.data().type);
-                } else {
-                    setEntityType('empresa');
-                }
+                await getDoc(docRef);
             } catch (error) {
-                console.error("Error fetching entity type:", error);
-                setEntityType('empresa');
+                console.warn("Could not fetch entity type from Firestore (fallback applied):", error);
             } finally {
                 setLoadingEntity(false);
             }
@@ -110,12 +93,6 @@ export default function SuiteDashboard() {
     if (loadingEntity) {
         return <div className="min-h-screen bg-black flex items-center justify-center text-white/50 tracking-widest text-xs uppercase">Connecting...</div>;
     }
-
-    if (entityType === 'persona') {
-        return <PersonaDashboard />;
-    }
-
-    const isEnterprise = entityType === 'empresa' || entityType !== 'persona';
 
     return (
         <ProtectedRoute>

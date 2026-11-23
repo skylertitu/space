@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { CardData, CheckIn, Note, PaymentMethod } from '../types';
 import { normalizePhoneNumber } from '@/lib/phoneUtils';
 import { useAuth } from '@/contexts/AuthContext';
+import { takeoverFields } from '@/lib/omnichannel/humanTakeover';
 
 interface UseCardOperationsProps {
     currentCardId: string | null;
@@ -355,16 +356,29 @@ export const useCardOperations = ({
         if (!currentCardId || !currentGroupId || currentCardId.startsWith('temp-')) return;
         
         try {
+            const now = Timestamp.now();
+            const patch = agentName === 'Mío' && currentUser?.uid
+                ? takeoverFields(currentUser.uid, currentUser.displayName || currentUser.email || 'Agente', now)
+                : {
+                    assignedTo: agentName === 'Unassigned' ? null : agentName,
+                    assignedToUid: null,
+                    isHandledByHuman: agentName !== 'Unassigned',
+                    botActive: agentName === 'Unassigned',
+                };
+            const convId = (liveCardData as { conversationId?: string } | null)?.conversationId || card?.conversationId || currentCardId;
             await updateDoc(doc(db, `${tenantPath}/kanban-groups`, currentGroupId, 'cards', currentCardId), {
-                assignedTo: agentName,
+                ...patch,
                 history: arrayUnion({
                     id: `hist_${Date.now()}`,
                     type: 'edit',
                     content: `Asignado a: ${agentName}`,
-                    timestamp: Timestamp.now(),
+                    timestamp: now,
                     author: 'Sistemas'
                 })
             });
+            if (convId) {
+                await updateDoc(doc(db, `${tenantPath}/conversations/${convId}`), patch).catch(() => undefined);
+            }
             toast.success(`Asignado a ${agentName}`);
         } catch (error) {
             console.error(error);

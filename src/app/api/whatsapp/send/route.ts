@@ -39,7 +39,7 @@ export async function POST(req: Request) {
         let apiError: any = null;
 
         try {
-            if (targetPlatform === 'instagram' || targetPlatform === 'messenger') {
+            if (targetPlatform === 'instagram' || targetPlatform === 'messenger' || targetPlatform === 'facebook') {
                 console.log(`[Omnichannel API] Sending to ${targetPlatform} (ID: ${toNumber}) for tenant ${entityId}`);
                 const { sendMetaMessage } = await import('@/lib/sendProviders');
                 responseData = await sendMetaMessage(toNumber, message, {
@@ -47,7 +47,7 @@ export async function POST(req: Request) {
                     url,
                     userId,
                     entityId,
-                    provider: targetPlatform as 'messenger' | 'instagram'
+                    provider: targetPlatform === 'instagram' ? 'instagram' : 'messenger'
                 });
                 messageId = responseData?.message_id;
             } else if (targetPlatform === 'gmail') {
@@ -75,8 +75,12 @@ export async function POST(req: Request) {
                 let sendOptions: any = { type, template, url, filename, userId, entityId };
                 const cleanSearch = toNumber.replace(/\D/g, '');
 
+                if (bodyValue.fromPhoneNumberId) {
+                    sendOptions.fromPhoneNumberId = String(bodyValue.fromPhoneNumberId);
+                }
+
                 // MULTI-NUMBER: reply FROM the same business number the conversation is on.
-                if (cleanSearch) {
+                if (!sendOptions.fromPhoneNumberId && cleanSearch) {
                     try {
                         const groupsSnap = await db
                             .collection(`users/${userId}/entities/${entityId}/kanban-groups`)
@@ -88,8 +92,17 @@ export async function POST(req: Request) {
                                 .limit(1)
                                 .get();
                             if (!cardSnap.empty) {
-                                const bizNumber = cardSnap.docs[0].data()?.whatsappPhoneNumberId;
-                                if (bizNumber) sendOptions.fromPhoneNumberId = String(bizNumber);
+                                const cardData = cardSnap.docs[0].data() || {};
+                                const bizNumber = cardData.whatsappPhoneNumberId;
+                                if (bizNumber) {
+                                    sendOptions.fromPhoneNumberId = String(bizNumber);
+                                } else if (cardData.conversationId) {
+                                    const convSnap = await db
+                                        .doc(`users/${userId}/entities/${entityId}/conversations/${cardData.conversationId}`)
+                                        .get();
+                                    const convNumber = convSnap.data()?.whatsappPhoneNumberId;
+                                    if (convNumber) sendOptions.fromPhoneNumberId = String(convNumber);
+                                }
                                 break;
                             }
                         }
@@ -250,6 +263,7 @@ export async function POST(req: Request) {
 
                 const newMessage = {
                     sender: 'agent',
+                    sentBy: userId,
                     text: message || '',
                     timestamp: new Date(),
                     whatsappMessageId: messageId || null,
@@ -281,6 +295,18 @@ export async function POST(req: Request) {
                 if (targetPlatform === 'whatsapp') {
                     convUpdate.contactNumberClean = cleanTo.replace(/\D/g, '');
                 }
+                if (!apiError && userId) {
+                    convUpdate.assignedTo = 'Mío';
+                    convUpdate.assignedToUid = userId;
+                    convUpdate.isHandledByHuman = true;
+                    convUpdate.botActive = false;
+                    convUpdate.humanTakeover = {
+                        active: true,
+                        activatedAt: new Date(),
+                        activatedBy: userId,
+                        activatedByName: null,
+                    };
+                }
 
                 await ensured.ref.update(convUpdate);
                 await syncThinCardPreview({
@@ -295,6 +321,15 @@ export async function POST(req: Request) {
                         unreadCount: 0,
                         ...(targetPlatform === 'whatsapp'
                             ? { contactNumberClean: cleanTo.replace(/\D/g, '') }
+                            : {}),
+                        ...(!apiError && userId
+                            ? {
+                                assignedTo: 'Mío',
+                                assignedToUid: userId,
+                                isHandledByHuman: true,
+                                botActive: false,
+                                humanTakeover: convUpdate.humanTakeover,
+                            }
                             : {}),
                     },
                 });

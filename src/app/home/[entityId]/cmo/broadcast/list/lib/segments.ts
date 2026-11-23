@@ -255,6 +255,20 @@ export const resolveRecipients = async (
                 include = t > 0 && now - t >= days * 86400000;
                 break;
             }
+            case "saved_audience": {
+                const tags = segment.tags || [];
+                const stages = segment.stages || [];
+                const sources = segment.sources || [];
+                if (tags.length + stages.length + sources.length === 0) {
+                    include = false;
+                    break;
+                }
+                const tagOk = tags.length === 0 || (Array.isArray(c.tags) && c.tags.some((tag: string) => tags.includes(tag)));
+                const stageOk = stages.length === 0 || stages.includes(c.stage);
+                const sourceOk = sources.length === 0 || sources.includes(c.source);
+                include = tagOk && stageOk && sourceOk;
+                break;
+            }
             default:
                 include = false;
         }

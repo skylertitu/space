@@ -83,7 +83,7 @@ const emptyConnections = (): SlotConnections => ({
 
 const ChatbotsPage = () => {
   const router = useRouter();
-  const { currentUser } = useAuth();
+  const { currentUser, loading: authLoading } = useAuth();
   const { firestoreId, routeSegment, entityName, tenantPath } = useEntityRoute();
   const [bots, setBots] = useState<Bot[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -98,11 +98,18 @@ const ChatbotsPage = () => {
   const [createPhoneId, setCreatePhoneId] = useState('');
 
   useEffect(() => {
-    if (!currentUser || !firestoreId) return;
+    if (authLoading) return;
+    if (!currentUser || !firestoreId) {
+      setIsLoading(false);
+      return;
+    }
     const botsCollection = collection(db, 'users', currentUser.uid, 'entities', firestoreId, 'chatbots');
+    const timer = setTimeout(() => setIsLoading(false), 3000);
+
     const unsubscribe = onSnapshot(
       botsCollection,
       (querySnapshot) => {
+        clearTimeout(timer);
         setBots(querySnapshot.docs.map((d) => ({
           id: d.id,
           name: d.data().name || 'Unnamed Bot',
@@ -113,13 +120,16 @@ const ChatbotsPage = () => {
         setIsLoading(false);
       },
       (error) => {
-        console.error('Error fetching bots:', error);
-        toast.error('No se pudieron cargar los bots.');
+        clearTimeout(timer);
+        console.warn('Error fetching bots:', error);
         setIsLoading(false);
       }
     );
-    return () => unsubscribe();
-  }, [currentUser, firestoreId]);
+    return () => {
+      clearTimeout(timer);
+      unsubscribe();
+    };
+  }, [currentUser, firestoreId, authLoading]);
 
   useEffect(() => {
     if (!tenantPath) return;

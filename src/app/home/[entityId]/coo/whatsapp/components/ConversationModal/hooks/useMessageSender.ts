@@ -3,11 +3,14 @@ import { useDropzone } from 'react-dropzone';
 import { toast } from 'sonner';
 import { useFileUpload } from '@/lib/hooks/useFileUpload';
 import { normalizePhoneNumber } from '@/lib/phoneUtils';
-import { Timestamp, doc, onSnapshot } from 'firebase/firestore';
+import { Timestamp, collection, doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { CardData, Message } from '../types';
 import { socialPlatforms } from '../constants';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEntityRoute } from '@/hooks/useEntityRoute';
+import { getWhatsAppIntegrationHealth } from '@/lib/omnichannel/whatsappIntegrationStatus';
+import { channelSendBlockReason } from '@/lib/omnichannel/channelSendHealth';
 import { resolveWhatsAppMessagingSettings } from '@/lib/mold/whatsappMessaging';
 import {
     buildWhatsAppTemplatePayload,
@@ -37,6 +40,11 @@ export const useMessageSender = ({
     activePlatform
 }: UseMessageSenderProps) => {
     const { currentUser, activeEntity } = useAuth();
+    const { firestoreId } = useEntityRoute();
+    const entityId = firestoreId || activeEntity || '';
+    const [whatsappCanSend, setWhatsappCanSend] = useState<boolean | null>(null);
+    const [integrationDocs, setIntegrationDocs] = useState<Record<string, any>>({});
+    const [integrationsReady, setIntegrationsReady] = useState(false);
     const [newMessage, setNewMessage] = useState('');
     const [gmailSubject, setGmailSubject] = useState('');
     const [isSending, setIsSending] = useState(false);
@@ -47,16 +55,31 @@ export const useMessageSender = ({
     const { uploading, progress, uploadFile } = useFileUpload();
 
     useEffect(() => {
-        if (!currentUser?.uid || !activeEntity) {
+        if (!currentUser?.uid || !entityId) {
             setWhatsappMessaging(resolveWhatsAppMessagingSettings());
             return;
         }
 
-        const entityRef = doc(db, `users/${currentUser.uid}/entities/${activeEntity}`);
-        return onSnapshot(entityRef, (snap) => {
+        const entityRef = doc(db, `users/${currentUser.uid}/entities/${entityId}`);
+        const unsubEntity = onSnapshot(entityRef, (snap) => {
             setWhatsappMessaging(resolveWhatsAppMessagingSettings(snap.data()));
         });
-    }, [currentUser?.uid, activeEntity]);
+        const unsubIntegrations = onSnapshot(
+            collection(db, `users/${currentUser.uid}/entities/${entityId}/integrations`),
+            (snap) => {
+                const docs: Record<string, any> = {};
+                snap.docs.forEach((d) => { docs[d.id] = d.data(); });
+                setIntegrationDocs(docs);
+                setIntegrationsReady(true);
+                setWhatsappCanSend(getWhatsAppIntegrationHealth(docs.whatsapp, docs.whatsapp_internal).canSend);
+            },
+            () => setWhatsappCanSend(false)
+        );
+        return () => {
+            unsubEntity();
+            unsubIntegrations();
+        };
+    }, [currentUser?.uid, entityId]);
 
     const resolveRecipientId = () => {
         const platform = activePlatform.toLowerCase();
@@ -127,6 +150,17 @@ export const useMessageSender = ({
         const recipientId = resolveRecipientId();
         if (!recipientId) return;
 
+        const channelBlock = channelSendBlockReason(activePlatform, integrationDocs, integrationsReady);
+        if (channelBlock) {
+            toast.error(channelBlock);
+            return;
+        }
+
+        if (activePlatform === 'WhatsApp' && whatsappCanSend === false) {
+            toast.error('WhatsApp no puede enviar. Conecta el número y el token en Integraciones.');
+            return;
+        }
+
         if (
             activePlatform === 'WhatsApp' &&
             needsTemplateMessage &&
@@ -189,7 +223,10 @@ export const useMessageSender = ({
                 groupId: currentGroupId,
                 platform: activePlatform,
                 userId: currentUser?.uid,
-                entityId: activeEntity,
+                entityId,
+                ...((liveCardData as any)?.whatsappPhoneNumberId || (card as any)?.whatsappPhoneNumberId
+                    ? { fromPhoneNumberId: String((liveCardData as any)?.whatsappPhoneNumberId || (card as any)?.whatsappPhoneNumberId) }
+                    : {}),
                 ...(activePlatform.toLowerCase() === 'gmail' ? { 
                     subject: gmailSubject || 'Sin Asunto',
                     threadId: threadId 
@@ -327,7 +364,10 @@ export const useMessageSender = ({
                     type: 'template',
                     template: { name: resolvedTemplateName, language: { code: resolvedLanguage } },
                     userId: currentUser?.uid,
-                    entityId: activeEntity
+                    entityId,
+                    ...((liveCardData as any)?.whatsappPhoneNumberId || (card as any)?.whatsappPhoneNumberId
+                        ? { fromPhoneNumberId: String((liveCardData as any)?.whatsappPhoneNumberId || (card as any)?.whatsappPhoneNumberId) }
+                        : {}),
                 })
             });
 
@@ -365,7 +405,9 @@ export const useMessageSender = ({
                 groupId: currentGroupId,
                 recipientId,
                 platform: activePlatform,
-                caption: newMessage
+                caption: newMessage,
+                entityId,
+                fromPhoneNumberId: (liveCardData as any)?.whatsappPhoneNumberId || (card as any)?.whatsappPhoneNumberId,
             });
             if (filePreviewUrl) URL.revokeObjectURL(filePreviewUrl);
             setSelectedFile(null);

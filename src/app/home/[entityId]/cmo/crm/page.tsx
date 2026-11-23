@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEntityRoute } from '@/hooks/useEntityRoute';
 
 import { AnimatePresence, Variants, motion } from 'framer-motion';
 
@@ -157,10 +158,11 @@ const itemVariants: Variants = {
 };
 
 export default function ContactsPage() {
-    const { currentUser, activeEntity } = useAuth();
+    const { currentUser } = useAuth();
+    const { firestoreId } = useEntityRoute();
     const getTenantPath = () => {
-        if (!currentUser?.uid || !activeEntity) return '';
-        return `users/${currentUser.uid}/entities/${activeEntity}`;
+        if (!currentUser?.uid || !firestoreId) return '';
+        return `users/${currentUser.uid}/entities/${firestoreId}`;
     };
 
     const [contacts, setContacts] = useState<any[]>([]);
@@ -270,7 +272,7 @@ export default function ContactsPage() {
             unsubscribeGroups();
             Object.values(cardUnsubs).forEach(u => u());
         };
-    }, [currentUser?.uid, activeEntity]);
+    }, [currentUser?.uid, firestoreId]);
 
     useEffect(() => {
         setIsLoadingContacts(true);
@@ -730,6 +732,23 @@ export default function ContactsPage() {
                 snap.docs.forEach(d => allCardDocs.push({ id: d.id, ref: d.ref, ...d.data(), groupId: group.id }));
             }
 
+            const convSnap = await getDocs(collection(db, `${tenantPath}/conversations`));
+            convSnap.docs.forEach((d) => {
+                const data = d.data();
+                allCardDocs.push({
+                    id: data.kanbanCardId || d.id,
+                    source: data.source || data.primary_channel || data.channel || 'WHATSAPP',
+                    metaSenderId: data.metaSenderId || data.platform_ids?.messenger || data.platform_ids?.instagram || null,
+                    contactNumber: data.contactNumber || data.contactNumberClean || null,
+                    contactName: data.contactName,
+                    email: data.email || '',
+                    tags: Array.isArray(data.tags) ? data.tags : [],
+                    stage: data.stage || 'In Progress',
+                    groupId: data.kanbanGroupId || null,
+                    updatedAt: data.updatedAt || null,
+                });
+            });
+
             let importedCount = 0;
             let updatedCount = 0;
 
@@ -775,7 +794,7 @@ export default function ContactsPage() {
                     email: cardData.email || '',
                     source: rawSource,
                     stage: cardData.stage || 'In Progress',
-                    lastUpdated: serverTimestamp(),
+                    lastUpdated: cardData.updatedAt || serverTimestamp(),
                     tags: Array.from(new Set([...(cardData.tags || [])])),
                     metaSenderId: metaId || null,
                     phone: phone || null,
@@ -808,6 +827,8 @@ export default function ContactsPage() {
                     
                     // Merge tags
                     contactData.tags = Array.from(new Set([...(existingData.tags || []), ...contactData.tags]));
+                    if (!contactData.phone) delete contactData.phone;
+                    if (!contactData.metaSenderId) delete contactData.metaSenderId;
 
                     await updateDoc(doc(db, `${tenantPath}/contacts`, existingContactDoc.id), contactData);
                     updatedCount++;
@@ -1318,6 +1339,32 @@ export default function ContactsPage() {
         }
     };
 
+    const handleSaveAudience = async () => {
+        const tenantPath = getTenantPath();
+        if (!tenantPath) return;
+        const stages = selectedStages.length > 0 ? selectedStages : (currentView !== 'all' ? [currentView] : []);
+        if (stages.length + selectedSources.length + selectedTags.length === 0) {
+            toast.error('Elige una etapa, una fuente o una etiqueta para guardar la audiencia.');
+            return;
+        }
+        const name = window.prompt('Nombre de la audiencia');
+        if (!name?.trim()) return;
+        try {
+            await addDoc(collection(db, `${tenantPath}/audiences`), {
+                name: name.trim(),
+                tags: selectedTags,
+                stages,
+                sources: selectedSources,
+                createdAt: serverTimestamp(),
+            });
+            toast.success('Audiencia guardada. Ya se puede elegir en una campaña.');
+            setIsFilterOpen(false);
+        } catch (error) {
+            console.error('[CRM] save audience', error);
+            toast.error('No se pudo guardar la audiencia.');
+        }
+    };
+
     const filteredContacts = contacts.filter(c => {
         const name = (c.name || '').toLowerCase();
         const email = (c.email || '').toLowerCase();
@@ -1447,6 +1494,7 @@ export default function ContactsPage() {
                         openBulkTag={() => setIsBulkTagOpen(true)}
                         currentView={currentView}
                         setCurrentView={setCurrentView}
+                        onSaveAudience={handleSaveAudience}
                     />
 
                     {isLoadingContacts ? (

@@ -27,7 +27,7 @@ export default function SuiteLayout({
     }, [setLanguage]);
 
     return (
-        <div className="min-h-screen bg-[#0a0a0a] text-white font-sans selection:bg-white/20 relative">
+        <div className="min-h-screen w-full max-w-full bg-[#0a0a0a] text-white font-sans selection:bg-white/20 relative overflow-x-hidden">
             <ProtectedRoute>
                 <EntityRouteResolver segment={segment}>
                     {!isWorkspace && (

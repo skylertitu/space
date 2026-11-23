@@ -96,8 +96,8 @@ const plans = [
     priceUSD: 49.99,
     lxrPrice: '$37.49',
     lxrPriceUSD: 37.49,
-    description: 'Initial access to start operating within elizmey.',
-    features: ['1 active workspace', 'Base dashboard', 'Essential support'],
+    description: 'Bandeja, chatbots y el número de esta cuenta.',
+    features: ['Bandeja de WhatsApp', 'Chatbots de la cuenta', 'Conexión del número de empresa'],
     accent: 'border-white/10 bg-white/[0.03]',
     highlighted: false,
     isEnterprise: false,
@@ -109,8 +109,8 @@ const plans = [
     priceUSD: 99.99,
     lxrPrice: '$74.99',
     lxrPriceUSD: 74.99,
-    description: 'Expanded workflow for high-paced teams and operations.',
-    features: ['3 active workspaces', 'Priority dashboard & support', 'SI research assistant'],
+    description: 'Lo de Starter, más campañas y audiencias.',
+    features: ['Todo lo de Starter', 'Campañas de difusión', 'Audiencias y contactos'],
     accent: 'border-white/10 bg-white/[0.03]',
     highlighted: false,
     isEnterprise: false,
@@ -122,8 +122,8 @@ const plans = [
     priceUSD: 199.99,
     lxrPrice: '$149.99',
     lxrPriceUSD: 149.99,
-    description: 'Advanced coverage for more robust operations.',
-    features: ['10 active workspaces', 'Premium support & faster responses', 'Advanced API access'],
+    description: 'Todos los módulos de mensajería de esta cuenta.',
+    features: ['Bandeja, bots, campañas y contactos', 'Métricas de envíos y respuestas', 'Todos los módulos de la cuenta'],
     accent: 'border-blue-500/50 bg-white/[0.06] shadow-lg shadow-blue-500/5',
     highlighted: true,
     isEnterprise: false,
@@ -135,8 +135,8 @@ const plans = [
     priceUSD: 999.99,
     lxrPrice: '$749.99',
     lxrPriceUSD: 749.99,
-    description: 'Dedicated resources for complex corporate requirements.',
-    features: ['Unlimited workspaces', 'Dedicated manager & Custom SLA', 'Enterprise security'],
+    description: 'El alcance de Pro, con pago anual disponible.',
+    features: ['Todos los módulos de mensajería', 'El mismo alcance de Pro', 'Pago anual disponible'],
     accent: 'border-white/10 bg-white/[0.03]',
     highlighted: false,
     isEnterprise: false,
@@ -242,10 +242,10 @@ export default function SubscriptionUpgradePage() {
                 </div>
                 <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
                   <span className="text-[10px] uppercase tracking-widest text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 w-fit">
-                    Active: {activePlanId}
+                    Activo: {activePlanId}
                   </span>
                   <p className="text-sm font-medium text-emerald-100/90 tracking-wide">
-                    Your subscription is active and valid until{' '}
+                    El plan de esta cuenta sigue vigente hasta{' '}
                     <span className="text-emerald-300 font-semibold">
                       {expiresAt ? new Date(expiresAt).toLocaleDateString() : 'N/A'}
                     </span>
@@ -256,7 +256,7 @@ export default function SubscriptionUpgradePage() {
                 onClick={() => router.push('/home')}
                 className="bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-black font-bold tracking-wider text-xs rounded-full h-9 px-6 transition-all duration-300 shadow-md shadow-emerald-500/20"
               >
-                Go to Dashboard
+                Ir al menú
               </Button>
             </div>
           </div>
@@ -269,13 +269,13 @@ export default function SubscriptionUpgradePage() {
                 className="border-white/10 bg-white/5 text-white hover:bg-white/10 hover:text-white rounded-full flex items-center gap-2 h-10 px-5 text-xs font-semibold tracking-wider uppercase transition-all duration-300 shadow-md backdrop-blur-sm"
               >
                 <Wallet className="w-3.5 h-3.5" />
-                Wallet
+                Ajustes
               </Button>
             </div>
 
             <div className="mx-auto mb-10 max-w-3xl text-center">
               <p className="mb-4 text-[11px] uppercase tracking-[0.45em] text-white/40 font-semibold">
-                Subscription
+                Plan
               </p>
               <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-white">
                 Cambiar tu plan
@@ -394,7 +394,7 @@ export default function SubscriptionUpgradePage() {
                         >
                           <Button className="w-full h-12 rounded-full font-semibold tracking-wider text-xs flex items-center justify-center gap-2 bg-violet-600/20 hover:bg-violet-600/30 text-violet-200 border border-violet-500/30">
                             <Mail className="w-4 h-4" />
-                            Upgrade — Contact team
+                            Subir a Enterprise
                           </Button>
                         </a>
                       ) : (
@@ -434,12 +434,10 @@ export default function SubscriptionUpgradePage() {
 
             <div className="mt-16 max-w-2xl mx-auto text-center">
               <p className="text-xs uppercase tracking-[0.35em] text-white/40 mb-4 font-semibold">
-                💎 Save with LXR
+                Pagar con LXR
               </p>
               <p className="text-sm text-white/60 font-medium">
-                Pay with our LXR token and unlock exclusive discounts.
-                Starter: <span className="text-green-400 font-bold">$14.99</span> (vs $19.99) • Pro:{' '}
-                <span className="text-green-400 font-bold">$74.99</span> (vs $99.99)
+                LXR cuesta 25% menos que el precio en dólares: Starter $37.49, Standard $74.99, Pro $149.99 y Enterprise $749.99.
               </p>
             </div>
           </section>
@@ -466,7 +464,7 @@ export default function SubscriptionUpgradePage() {
               className="group flex items-center gap-2 text-white/40 hover:text-white transition-all duration-300"
             >
               <LogOut className="w-4 h-4 transition-transform duration-300 group-hover:-translate-x-1" strokeWidth={1.5} />
-              <span className="text-sm font-medium tracking-wide">Log out</span>
+              <span className="text-sm font-medium tracking-wide">Cerrar sesión</span>
             </button>
           </div>
 
@@ -475,7 +473,7 @@ export default function SubscriptionUpgradePage() {
               onClick={() => router.push('/home')}
               className="group flex items-center gap-2 text-white/40 hover:text-white transition-all duration-300"
             >
-              <span className="text-sm font-medium tracking-wide">Go to Home</span>
+              <span className="text-sm font-medium tracking-wide">Ir al inicio</span>
               <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" strokeWidth={1.5} />
             </button>
           </div>

@@ -12,7 +12,7 @@
     "build": "next build",
     "build:clean": "npm run clean && npm run build",
     "start": "next start",
-    "lint": "next lint --dir src",
+    "lint": "next lint",
     "postinstall": "patch-package",
     "deploy:functions": "firebase deploy --only functions",
     "cleanup:functions:legacy": "firebase functions:delete metaWebhook telegramWebhook xWebhook webchatWebhook tiktokWebhook googleFormsWebhook baileysWebhook ssrroosevelt491004 --region us-central1 --force",

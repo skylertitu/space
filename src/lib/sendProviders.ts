@@ -438,7 +438,7 @@ export async function sendWhatsAppMessage(
         throw new Error(
             `Configuración de WhatsApp incompleta para '${options.entityId}'. ` +
             `Falta ${!token && !phoneNumberId ? 'Access Token y Phone Number ID' : !token ? 'Access Token' : 'Phone Number ID'}. ` +
-            `Ve a CTO → Integraciones → WhatsApp, edita la conexión y guarda ambos campos. ` +
+            `Ve a Integraciones → WhatsApp y guarda el token y el ID del número. ` +
             `Detalles: userId=${options.userId}, hasToken=${!!token}, hasPhoneId=${!!phoneNumberId}`
         );
     }

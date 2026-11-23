@@ -23,15 +23,20 @@ const normalizePlanId = (plan?: string | null, priceUSD?: number | null) => {
 };
 
 const getSubscriptionSnapshot = async (userId: string, entityId: string | null) => {
-  if (entityId && entityId !== 'default') {
-    const entitySubRef = doc(db, `users/${userId}/entities/${entityId}/subscriptions/current`);
-    const snap = await getDoc(entitySubRef);
-    if (snap.exists()) return snap;
+  try {
+    if (entityId && entityId !== 'default') {
+      const entitySubRef = doc(db, `users/${userId}/entities/${entityId}/subscriptions/current`);
+      const snap = await getDoc(entitySubRef);
+      if (snap.exists()) return snap;
+      return null;
+    }
+    const globalRef = doc(db, `users/${userId}/subscriptions/current`);
+    const snap = await getDoc(globalRef);
+    return snap.exists() ? snap : null;
+  } catch (err) {
+    console.warn('[useSubscriptionStatus] Snapshot offline or unavailable:', err);
     return null;
   }
-  const globalRef = doc(db, `users/${userId}/subscriptions/current`);
-  const snap = await getDoc(globalRef);
-  return snap.exists() ? snap : null;
 };
 
 interface SubscriptionData {
@@ -61,6 +66,21 @@ export function useSubscriptionStatus(customEntityId?: string | null): Subscript
   useEffect(() => {
     const checkSubscription = async () => {
       if (!currentUser) {
+        setLoading(false);
+        return;
+      }
+
+      // El entorno personal es 100% gratuito y no requiere suscripción
+      if (entity === 'personal' || entity === 'life') {
+        setSubscriptionData({
+          status: 'active',
+          plan: 'personal',
+          expiresAt: null,
+          priceUSD: 0,
+          activatedAt: new Date().toISOString(),
+          isExpired: false,
+          cancelAtPeriodEnd: false,
+        });
         setLoading(false);
         return;
       }
@@ -148,7 +168,7 @@ export function useSubscriptionStatus(customEntityId?: string | null): Subscript
           });
         }
       } catch (error) {
-        console.error('Error checking subscription:', error);
+        console.warn('Subscription check handled (fallback applied):', error);
         setSubscriptionData({
           status: null,
           plan: null,

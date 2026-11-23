@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Search, Zap, ArrowRight, Settings2, ExternalLink } from 'lucide-react';
+import { Search, Zap, ArrowRight, Settings2, ExternalLink, ChevronLeft } from 'lucide-react';
 import Link from 'next/link';
 import { getWhatsAppIntegrationHealth } from '@/lib/omnichannel/whatsappIntegrationStatus';
 import { useAuth } from '@/contexts/AuthContext';
@@ -133,66 +133,43 @@ export default function IntegrationsPage() {
 
             <main className="relative z-10 w-full px-5 py-8 md:px-10 md:py-12 lg:px-14">
                 {/* Header */}
-                <header className="mb-10">
-                    <div className="mb-6 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
-                        <div className="max-w-xl">
-                            <div className="mb-3 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.25em] text-blue-400/80">
-                                <Zap className="h-3 w-3 fill-current" />
-                                Master Connect
-                            </div>
-                            <h1 className="text-3xl font-extralight tracking-tight text-white md:text-4xl">
-                                Integraciones
-                            </h1>
-                            <p className="mt-2 text-sm leading-relaxed text-white/40">
-                                {entityName ? (
-                                    <>
-                                        Empresa: <span className="text-white/70">{entityName}</span>
-                                        {' · '}
-                                        Ruta: <span className="font-mono text-white/55">/home/{routeSegment}</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        Conecta canales para{' '}
-                                        <span className="font-mono text-white/55">/home/{routeSegment}</span>
-                                    </>
-                                )}
-                            </p>
+                <header className="mb-8">
+                    <div className="mb-6">
+                        <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.25em] text-blue-400 mb-1">
+                            <Zap className="h-3 w-3 fill-current" />
+                            <span>Master Connect</span>
                         </div>
-
-                        <div className="flex items-center gap-3 self-start md:self-auto">
-                            <div className="rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-3 text-center">
-                                <p className="text-[9px] font-bold uppercase tracking-widest text-white/35">Activas</p>
-                                <p className="mt-0.5 text-2xl font-light text-white">
-                                    {loading ? '—' : connectedCount}
-                                    <span className="ml-1 text-sm text-white/30">/ {INTEGRATIONS.length}</span>
-                                </p>
-                            </div>
-                        </div>
+                        <h1 className="text-2xl sm:text-3xl md:text-4xl font-normal text-white tracking-tight">
+                            Integraciones
+                        </h1>
+                        <p className="text-neutral-400 text-xs sm:text-sm mt-0.5">
+                            {entityName || routeSegment} · WhatsApp, Facebook, Instagram y Telegram
+                        </p>
                     </div>
 
-                    {/* Toolbar */}
-                    <div className="flex flex-col gap-4 rounded-[28px] border border-white/6 bg-white/[0.02] p-4 backdrop-blur-sm md:flex-row md:items-center md:justify-between">
-                        <div className="relative min-w-0 flex-1 md:max-w-sm">
+                    {/* Toolbar sin contenedores envolventes */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div className="relative flex-1 max-w-sm">
                             <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/25" />
                             <input
                                 type="text"
                                 placeholder="Buscar por nombre o categoría…"
-                                className="h-11 w-full rounded-xl border border-white/8 bg-black/40 pl-10 pr-4 text-sm text-white placeholder:text-white/25 focus:border-white/20 focus:outline-none"
+                                className="h-10 w-full rounded-xl border border-white/10 bg-white/[0.04] pl-10 pr-4 text-xs text-white placeholder:text-white/30 focus:border-white/20 focus:outline-none"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                             />
                         </div>
 
-                        <div className="flex gap-1.5 overflow-x-auto no-scrollbar">
+                        <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
                             {CATEGORIES.map((cat) => (
                                 <button
                                     key={cat}
                                     type="button"
                                     onClick={() => setSelectedCategory(cat)}
-                                    className={`shrink-0 rounded-full px-4 py-2 text-[11px] font-medium transition-all ${
+                                    className={`shrink-0 rounded-xl px-4 py-2 text-xs font-medium transition-all ${
                                         selectedCategory === cat
-                                            ? 'bg-white text-black'
-                                            : 'text-white/45 hover:bg-white/5 hover:text-white'
+                                            ? 'bg-white text-black font-semibold'
+                                            : 'bg-white/[0.04] text-neutral-400 hover:text-white hover:bg-white/[0.08] border border-white/5'
                                     }`}
                                 >
                                     {cat}
@@ -208,7 +185,7 @@ export default function IntegrationsPage() {
                         <p className="text-sm text-white/40">No hay integraciones que coincidan con tu búsqueda.</p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 w-full">
                         <AnimatePresence mode="popLayout">
                             {filteredIntegrations.map((integration) => (
                                 <IntegrationCard
@@ -403,7 +380,7 @@ function IntegrationCard({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.98 }}
             transition={{ duration: 0.25 }}
-            className={`group relative flex h-full min-h-[280px] flex-col overflow-hidden rounded-[28px] border bg-[#0a0a0a]/80 p-6 transition-all duration-300 hover:bg-[#0d0d0d] ${
+            className={`group relative flex h-full min-h-[280px] w-full flex-col overflow-hidden rounded-[28px] border bg-[#0a0a0a]/80 p-6 transition-all duration-300 hover:bg-[#0d0d0d] ${
                 statusReady
                     ? 'border-emerald-500/25'
                     : statusPartial || gmailPending

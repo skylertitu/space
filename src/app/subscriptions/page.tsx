@@ -140,59 +140,11 @@ const plans: PlanConfig[] = [
     monthlyPriceUSD: 49.99,
     annualPrice: '$39.99',
     annualPriceUSD: 39.99,
-    featuresHeader: 'Starter includes:',
+    featuresHeader: 'Starter incluye:',
     features: [
-      {
-        iconType: 'storage',
-        boldText: '30 GB',
-        normalText: 'pooled storage per user for files, emails and assets*',
-      },
-      {
-        iconType: 'email',
-        boldText: 'Custom business email',
-        normalText: ', you@your-company.com + elizmey SI assistant in Mail',
-      },
-      {
-        iconType: 'suite',
-        boldText: 'Full suite of elizmey apps',
-        normalText: ', including Mail, Calendar, Chat, Drive, Docs, Sheets, and Sites',
-      },
-      {
-        iconType: 'ai',
-        boldText: 'Chat with SI in the elizmey app',
-        normalText: 'with enterprise-grade security & privacy, your company data is ',
-        highlightText: 'not used to train models',
-      },
-      {
-        iconType: 'workflow',
-        boldText: 'Create SI-powered workflows',
-        normalText: 'across elizmey apps to automate everyday work',
-      },
-      {
-        iconType: 'check',
-        boldText: 'Host longer video calls',
-        normalText: 'with noise cancellation and high-definition audio',
-      },
-      {
-        iconType: 'check',
-        boldText: 'Set up emails for your team',
-        normalText: 'like priya@your-company.com or sales@your-company.com',
-      },
-      {
-        iconType: 'check',
-        boldText: 'Generate and edit content with SI',
-        normalText: 'in elizmey Creator & Vids',
-      },
-      {
-        iconType: 'check',
-        boldText: 'Create shared drives and manage members',
-        normalText: ', access, files, and permissions',
-      },
-      {
-        iconType: 'check',
-        boldText: 'Add and manage up to 300 users',
-        normalText: ', with built-in security and management controls',
-      },
+      { iconType: 'check', boldText: 'Bandeja de WhatsApp', normalText: ' para leer y responder desde esta cuenta' },
+      { iconType: 'check', boldText: 'Chatbots', normalText: ' que se guardan y se activan en esta cuenta' },
+      { iconType: 'check', boldText: 'Número de empresa', normalText: ' conectado en Integraciones' },
     ],
   },
   {
@@ -203,53 +155,11 @@ const plans: PlanConfig[] = [
     annualPrice: '$79.99',
     annualPriceUSD: 79.99,
     highlighted: true,
-    featuresHeader: 'Includes all of Starter, and:',
+    featuresHeader: 'Incluye Starter, y además:',
     features: [
-      {
-        iconType: 'storage',
-        boldText: '2 TB',
-        normalText: 'pooled storage per user. Get 65x more than Starter*',
-      },
-      {
-        iconType: 'email',
-        boldText: 'Custom business email',
-        normalText: ', you@your-company.com + custom layouts, and mail merge',
-      },
-      {
-        iconType: 'suite',
-        boldText: 'Unlock premium SI built-in',
-        normalText: 'across Mail, Docs, Drive, Sheets, and more',
-      },
-      {
-        iconType: 'ai',
-        boldText: 'Chat with SI in the elizmey app',
-        normalText: 'with additional access to advanced reasoning models',
-      },
-      {
-        iconType: 'esign',
-        boldText: 'eSignature',
-        normalText: 'with Docs and PDFs to create, send, and sign contracts',
-      },
-      {
-        iconType: 'video',
-        boldText: 'Better video meetings',
-        normalText: 'with SI note taking, real-time speech translation, and recordings',
-      },
-      {
-        iconType: 'booking',
-        boldText: 'Appointment booking pages',
-        normalText: 'to let clients book time directly with you',
-      },
-      {
-        iconType: 'notebook',
-        boldText: 'elizmey Notebook SI',
-        normalText: 'research and thinking partner with expanded access',
-      },
-      {
-        iconType: 'check',
-        boldText: 'Data migration tool',
-        normalText: 'to move emails, contacts, and files seamlessly to elizmey',
-      },
+      { iconType: 'check', boldText: 'Campañas', normalText: ' de difusión por WhatsApp' },
+      { iconType: 'check', boldText: 'Audiencias', normalText: ': contactos, importación y duplicados' },
+      { iconType: 'check', boldText: 'El mismo número', normalText: ' de empresa para responder y para difundir' },
     ],
   },
   {
@@ -259,43 +169,11 @@ const plans: PlanConfig[] = [
     monthlyPriceUSD: 199.99,
     annualPrice: '$159.99',
     annualPriceUSD: 159.99,
-    featuresHeader: 'All of Standard, and:',
+    featuresHeader: 'Incluye Standard, y además:',
     features: [
-      {
-        iconType: 'storage',
-        boldText: '5 TB',
-        normalText: 'pooled storage per user. Get 2.5x more than Standard*',
-      },
-      {
-        iconType: 'email',
-        boldText: 'Custom business email',
-        normalText: '+ eDiscovery and corporate retention policies',
-      },
-      {
-        iconType: 'video',
-        boldText: 'Video meetings with attendance tracking',
-        normalText: ', up to 500 concurrent participants',
-      },
-      {
-        iconType: 'security',
-        boldText: 'Vault',
-        normalText: 'to retain, archive, export, and search organizational data',
-      },
-      {
-        iconType: 'check',
-        boldText: 'Secure LDAP',
-        normalText: 'authentication integration for infrastructure',
-      },
-      {
-        iconType: 'check',
-        boldText: 'Advanced endpoint management',
-        normalText: 'for corporate devices and fleet controls',
-      },
-      {
-        iconType: 'check',
-        boldText: 'Enhanced security and management controls',
-        normalText: 'with custom access tiering',
-      },
+      { iconType: 'check', boldText: 'Todos los módulos', normalText: ' de mensajería de esta cuenta' },
+      { iconType: 'check', boldText: 'Métricas', normalText: ' de envíos, respuestas y fallos' },
+      { iconType: 'check', boldText: 'Bandeja, bots, campañas y contactos', normalText: ' en la misma cuenta' },
     ],
   },
   {
@@ -306,68 +184,11 @@ const plans: PlanConfig[] = [
     annualPrice: '$799.99',
     annualPriceUSD: 799.99,
     isEnterprise: false,
-    featuresHeader: 'All features mentioned, and:',
+    featuresHeader: 'Incluye Pro, y además:',
     features: [
-      {
-        iconType: 'storage',
-        boldText: '5 TB',
-        normalText: 'pooled storage per user or upgrade for flexible custom capacity*',
-      },
-      {
-        iconType: 'email',
-        boldText: 'Custom business email',
-        normalText: '+ S/MIME encryption and data governance',
-      },
-      {
-        iconType: 'video',
-        boldText: 'Video meetings with in-domain live streaming',
-        normalText: ', up to 1,000 participants',
-      },
-      {
-        iconType: 'check',
-        boldText: 'Data Loss Prevention (DLP)',
-        normalText: 'for Drive and communication channels',
-      },
-      {
-        iconType: 'check',
-        boldText: 'Context-Aware Access (CAA)',
-        normalText: 'with granular location & IP policies',
-      },
-      {
-        iconType: 'check',
-        boldText: 'Enterprise data regions',
-        normalText: 'and localized data residency',
-      },
-      {
-        iconType: 'check',
-        boldText: 'Cloud Identity Premium',
-        normalText: 'and automated user provisioning',
-      },
-      {
-        iconType: 'check',
-        boldText: 'Enterprise endpoint management',
-        normalText: 'with remote wipe and sandbox security',
-      },
-      {
-        iconType: 'check',
-        boldText: 'SI Classification for elizmey Drive',
-        normalText: 'and sensitive document labeling',
-      },
-      {
-        iconType: 'check',
-        boldText: 'Assured controls available as an add-on',
-        normalText: 'for strict regulatory compliance',
-      },
-      {
-        iconType: 'check',
-        boldText: 'Enhanced Support',
-        normalText: 'with 15-minute response times for critical P1 issues',
-      },
-      {
-        iconType: 'check',
-        boldText: 'No minimum or maximum user limits',
-        normalText: 'for elastic global enterprise scaling',
-      },
+      { iconType: 'check', boldText: 'Todos los módulos', normalText: ' de mensajería de esta cuenta' },
+      { iconType: 'check', boldText: 'El mismo alcance de Pro', normalText: ' en bandeja, bots, campañas y contactos' },
+      { iconType: 'check', boldText: 'Pago anual', normalText: ' a $799.99 por mes si se paga el año' },
     ],
   },
 ];
@@ -563,20 +384,20 @@ function SubscriptionsContent() {
             <div className="mx-auto mb-10 max-w-3xl text-center z-[40] space-y-3">
               {targetEntity && (
                 <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-300 text-xs font-normal backdrop-blur-md">
-                  <span className="text-white/60 font-light">Subscription for environment:</span>
+                  <span className="text-white/60 font-light">Plan de:</span>
                   <span className="font-semibold text-white">{targetEntity.name}</span>
                   {targetEntity.type && (
                     <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/10 text-white/80 font-normal">
-                      {targetEntity.type === 'persona' ? 'Personal' : targetEntity.type === 'creador' ? 'Creator' : 'Business'}
+                      {targetEntity.type === 'persona' ? 'Personal' : targetEntity.type === 'creador' ? 'Creador' : 'Empresa'}
                     </span>
                   )}
                 </div>
               )}
               <h1 className="text-3xl sm:text-4xl md:text-5xl font-normal tracking-tight text-white">
-                Choose the right plan for {targetEntity ? targetEntity.name : 'your business'}.
+                El plan de mensajería de {targetEntity ? targetEntity.name : 'esta cuenta'}.
               </h1>
               <p className="text-sm sm:text-base text-white/60 font-normal">
-                Each environment operates with its own independent subscription for isolated and professional management.
+                Cada cuenta de empresa tiene su propio plan. Un perfil personal no paga.
               </p>
               <div className="pt-2 flex justify-center">
                 <button
@@ -595,7 +416,6 @@ function SubscriptionsContent() {
               
               {/* Top Bar: Clean unboxed icons on Left, Annual Switch on Right */}
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pb-8 border-b border-white/5 mb-8">
-                {/* Clean Suite Icons */}
                 <div className="flex items-center gap-4">
                   <Mail className="w-5 h-5 text-white/60 hover:text-white transition-colors" />
                   <Calendar className="w-5 h-5 text-white/60 hover:text-white transition-colors" />
@@ -605,11 +425,10 @@ function SubscriptionsContent() {
                   <Sparkles className="w-5 h-5 text-white/60 hover:text-white transition-colors" />
                 </div>
 
-                {/* Annual Toggle Switch */}
                 {!hasActiveSubscription && (
                   <div className="flex items-center gap-3">
                     <span className="text-xs sm:text-sm text-white/70 font-normal">
-                      Annual <span className="text-blue-400 font-normal">(Save 20% with one-year commitment)</span>
+                      Anual <span className="text-blue-400 font-normal">(un año, con el precio anual)</span>
                     </span>
                     <button
                       onClick={() => setIsAnnual(!isAnnual)}
@@ -648,7 +467,7 @@ function SubscriptionsContent() {
                           className="w-full block"
                         >
                           <Button className="w-full h-11 rounded-full bg-transparent hover:bg-white/10 text-blue-400 hover:text-blue-300 border border-blue-500/40 flex items-center justify-center font-medium text-sm transition-all duration-300">
-                            Contact sales
+                            Contactar
                           </Button>
                         </a>
                       );
@@ -661,7 +480,7 @@ function SubscriptionsContent() {
                           className="h-11 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-medium tracking-wider text-xs uppercase cursor-default flex items-center justify-center gap-2 w-full"
                         >
                           <CheckCircle className="w-4 h-4 text-emerald-400" />
-                          Current Plan
+                          Plan actual
                         </Button>
                       );
                     }
@@ -677,9 +496,9 @@ function SubscriptionsContent() {
                       >
                         {hasActiveSubscription 
                           ? displayPriceUSD > currentPlanPrice 
-                            ? 'Upgrade' 
-                            : 'Get started' 
-                          : 'Get started'}
+                            ? 'Subir de plan' 
+                            : 'Elegir' 
+                          : 'Elegir'}
                       </Button>
                     );
                   };
@@ -717,13 +536,13 @@ function SubscriptionsContent() {
                               {displayPrice}
                             </span>
                             <span className="text-xs text-white/50 mt-0.5 font-normal">
-                              per user / month
+                              {isAnnual ? 'por cuenta / mes, pago anual' : 'por cuenta / mes'}
                             </span>
                           </div>
                         ) : (
                           <div className="flex flex-col">
                             <span className="text-xs text-white/60 mt-3 font-normal">
-                              Contact sales for pricing
+                              Precio a consultar
                             </span>
                           </div>
                         )}
@@ -766,18 +585,15 @@ function SubscriptionsContent() {
 
               {/* Bottom footer text inside container */}
               <div className="flex flex-col sm:flex-row items-center justify-between gap-2 pt-8 mt-8 border-t border-white/5 text-[11px] text-white/40">
-                <span>{isAnnual ? 'All plans billed annually' : 'All plans billed monthly'}</span>
-                <span>All prices $USD</span>
+                <span>{isAnnual ? 'El anual se cobra por el año completo' : 'El mensual se cobra cada mes'}</span>
+                <span>Precios en USD. Tarjeta o Solana.</span>
               </div>
             </div>
 
             {/* Bottom Disclaimers */}
             <div className="mx-auto w-full max-w-[92rem] mt-6 px-4 space-y-2 text-[11px] text-white/40 leading-relaxed">
               <p>
-                Business Starter, Business Standard, and Business Pro plans can be purchased for a maximum of 300 users. There is no minimum or maximum user limit for Enterprise plans. elizmey customers may have access to additional features for a limited promotional period.
-              </p>
-              <p>
-                *elizmey provides flexible pooled storage per user that is shared across the organization. Starter includes 30 GB pooled storage per user, Standard includes 2 TB, Pro and Enterprise include 5 TB. Contact support to learn more about getting additional storage for your organization.
+                El plan es de la cuenta de empresa. Starter cubre bandeja y chatbots. Standard suma campañas y audiencias. Pro y Enterprise abren todos los módulos de mensajería. La tarjeta se renueva sola. El pago con Solana cubre solo el periodo comprado.
               </p>
             </div>
 

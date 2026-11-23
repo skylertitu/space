@@ -7,6 +7,8 @@ import { useKanbanBoard } from '../whatsapp/hooks/useKanbanBoard';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEntityRoute } from '@/hooks/useEntityRoute';
 import { preloadWhatsAppTemplateBodies } from '@/lib/broadcast/templateDisplayCache';
+import { getWhatsAppIntegrationHealth } from '@/lib/omnichannel/whatsappIntegrationStatus';
+import { getChannelSendHealth, type InboxChannel } from '@/lib/omnichannel/channelSendHealth';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot } from 'firebase/firestore';
 import { AlertTriangle } from 'lucide-react';
@@ -48,32 +50,51 @@ export default function OmnichannelInboxPage() {
     }, [activeConversationId, cards, loading]);
 
     // Global Integration Status Watchdog
-    const [integrationStatuses, setIntegrationStatuses] = useState<Record<string, string>>({});
+    const [integrationDocs, setIntegrationDocs] = useState<Record<string, any>>({});
     
     React.useEffect(() => {
         if (!currentUser?.uid || !entityIdForApi) return;
         if (currentUser.uid.startsWith('demo')) {
-            setIntegrationStatuses({ whatsapp: 'Connected', meta: 'Connected', telegram: 'Connected' });
+            setIntegrationDocs({});
             return;
         }
         const integrationsRef = collection(db, `users/${currentUser.uid}/entities/${entityIdForApi}/integrations`);
         const unsubscribe = onSnapshot(integrationsRef, (snapshot) => {
-            const statuses: Record<string, string> = {};
+            const docs: Record<string, any> = {};
             snapshot.docs.forEach(doc => {
                 if (doc.id === '_init') return;
-                statuses[doc.id] = doc.data().status;
+                docs[doc.id] = doc.data();
             });
-            setIntegrationStatuses(statuses);
+            setIntegrationDocs(docs);
         }, (err) => {
             console.warn('[Omnichannel] Integrations listener offline', err);
-            setIntegrationStatuses({ whatsapp: 'Connected', meta: 'Connected' });
+            setIntegrationDocs({});
         });
         return () => unsubscribe();
     }, [currentUser?.uid, entityIdForApi]);
 
-    const offlineChannels = Object.entries(integrationStatuses)
-        .filter(([_, status]) => status === 'Error')
-        .map(([id]) => id.charAt(0).toUpperCase() + id.slice(1));
+    const whatsappHealth = getWhatsAppIntegrationHealth(
+        integrationDocs.whatsapp,
+        integrationDocs.whatsapp_internal
+    );
+    const whatsappBlocked = !!(integrationDocs.whatsapp || integrationDocs.whatsapp_internal)
+        ? !whatsappHealth.canSend
+        : false;
+    const channelNames: Record<string, string> = {
+        instagram: 'Instagram',
+        messenger: 'Messenger',
+        gmail: 'Gmail',
+        telegram: 'Telegram',
+        twitter: 'X',
+        x_twitter: 'X',
+    };
+    const channelGaps = (['messenger', 'instagram', 'telegram'] as InboxChannel[])
+        .filter((id) => getChannelSendHealth(id, integrationDocs[id]).partial)
+        .map((id) => channelNames[id]);
+    const otherErrors = Object.entries(integrationDocs)
+        .filter(([id, data]) => !id.startsWith('whatsapp') && !['messenger', 'instagram', 'telegram'].includes(id) && data?.status === 'Error')
+        .map(([id]) => channelNames[id] || id);
+    const otherOffline = [...channelGaps, ...otherErrors];
 
     // Find active card data
     const activeCard = cards.find(c => c.id === activeConversationId) || null;
@@ -82,16 +103,18 @@ export default function OmnichannelInboxPage() {
     return (
         <div className="flex flex-col min-h-screen overflow-y-auto md:h-screen md:overflow-hidden bg-[#0a0a0a] text-white text-sm font-sans tracking-tight">
             {/* 0. Global Connectivity Alert Banner */}
-            {offlineChannels.length > 0 && (
+            {(whatsappBlocked || otherOffline.length > 0) && (
                 <div className="bg-amber-600 px-4 py-1.5 flex items-center justify-between animate-in slide-in-from-top duration-500 z-[100]">
                     <div className="flex items-center gap-2">
                         <AlertTriangle size={14} className="text-white animate-pulse" />
                         <span className="text-[11px] font-black uppercase tracking-wider text-white">
-                            Atención: {offlineChannels.join(', ')} se ha desconectado. Reconéctalo en Configuración.
+                            {whatsappBlocked
+                                ? 'WhatsApp no puede enviar. Falta el número o el token.'
+                                : `${otherOffline.join(', ')} no puede enviar. Revisa la cuenta en Integraciones.`}
                         </span>
                     </div>
                     <button 
-                        onClick={() => window.open(`/home/${activeEntityRoute || activeEntity}/cto/integrations`, '_blank')}
+                        onClick={() => window.open(`/home/${activeEntityRoute || activeEntity}/integrations`, '_blank')}
                         className="bg-white/20 hover:bg-white/30 text-white text-[9px] font-black px-3 py-1 rounded transition-colors uppercase"
                     >
                         Reconectar Ahora
@@ -100,8 +123,8 @@ export default function OmnichannelInboxPage() {
             )}
 
             <div className="flex flex-1 overflow-hidden relative p-2.5 gap-2.5 bg-[#050505]">
-                {/* 1. Left Column: Floating card with List of conversations & top channel browser tabs */}
-                <div className={`${activeConversationId ? 'hidden' : 'flex'} md:flex flex-col w-full md:w-[50%] lg:w-[50%] h-full bg-[#0d0d0d] rounded-2xl border border-neutral-800/80 shadow-2xl shadow-black/80 overflow-hidden flex-shrink-0`}>
+                {/* 1. Left Column: Floating card with List of conversations & channel icons dock */}
+                <div className={`${activeConversationId ? 'hidden' : 'flex'} md:flex flex-col w-full md:w-[380px] lg:w-[390px] xl:w-[410px] h-full bg-[#0d0d0d] rounded-2xl border border-neutral-800/80 shadow-2xl shadow-black/80 overflow-hidden flex-shrink-0`}>
                     <ChatList
                         selectedFolder={selectedFolder}
                         setSelectedFolder={setSelectedFolder}

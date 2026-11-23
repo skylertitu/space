@@ -213,9 +213,10 @@ export async function processChatbotFlow(ctx: ChatbotContext, retryCount = 0) {
 
     try {
         const earlySnap = await box.ref.get();
-        if (earlySnap.exists && earlySnap.data()?.humanTakeover?.active === true) {
+        const earlyData = earlySnap.exists ? earlySnap.data() || {} : null;
+        if (earlyData && (earlyData.humanTakeover?.active === true || earlyData.isHandledByHuman === true)) {
             console.log(`[ChatbotEngine] 🧑‍💼 Human takeover active — skipping bot for ${conversationId}`);
-            const data = earlySnap.data() || {};
+            const data = earlyData || {};
             const queue = dedupeQueueItems(data.botState?.messageQueue || []);
             if (triggerMessageId && queue.some((q) => String(q.messageId) === triggerMessageId)) {
                 await box.ref.update({
@@ -1938,12 +1939,33 @@ async function runEngineCycle(
 
         if (node.type === 'humanHandoffNode') {
             console.log(`[ChatbotEngine] Human Handoff initiated`);
+            const handoffState = () => ({
+                active: true,
+                activatedAt: admin.firestore.FieldValue.serverTimestamp(),
+                activatedBy: null,
+                activatedByName: null,
+            });
             await box.ref.update({
                 isHandledByHuman: true,
                 botActive: false,
+                assignedTo: null,
+                assignedToUid: null,
+                humanTakeover: handoffState(),
                 'botState.status': 'completed',
                 'botState.waitingForInput': false
             });
+            const currentPlacementGroupId = getPlacementGroupId();
+            if (currentPlacementGroupId && cardId) {
+                await db.doc(`${entityPath}/kanban-groups/${currentPlacementGroupId}/cards/${cardId}`).set({
+                    conversationId,
+                    assignedTo: null,
+                    assignedToUid: null,
+                    isHandledByHuman: true,
+                    botActive: false,
+                    humanTakeover: handoffState(),
+                    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+                }, { merge: true });
+            }
             const handoffMsg = "Te estoy transfiriendo con un agente humano. Por favor, espera un momento.";
             await dispatchMessage(handoffMsg);
             await appendAgentMessage({

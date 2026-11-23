@@ -4,9 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowRight, ChevronDown, Zap, MessageSquare } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
+import { ArrowRight, ChevronDown, MessageSquare } from 'lucide-react';
 
 
 import { LandingNavbar } from '@/components/landing/LandingNavbar';
@@ -263,13 +261,6 @@ const WaveParagraph = ({ onCollapse }: { onCollapse?: () => void }) => {
 
 export default function LandingPage() {
   const [titleRun, setTitleRun] = useState(0);
-  const { loginDemo } = useAuth();
-  const router = useRouter();
-
-  const handleEnterDemo = () => {
-    loginDemo();
-    router.push('/home/mensajeria/coo/omnichannel');
-  };
 
   // Tras el colapso, el título repite la ola sin parar: al terminar cada pasada espera 3 s y reinicia.
   useEffect(() => {
@@ -330,21 +321,7 @@ export default function LandingPage() {
           <HeroAskRooseveltBar />
         </motion.div>
 
-        {/* Acceso Directo a la Plataforma de Mensajería */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-          className="flex flex-wrap items-center justify-center gap-4 z-20 pb-4"
-        >
-          <button
-            onClick={handleEnterDemo}
-            className="px-8 py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-full font-semibold text-sm transition-all shadow-xl shadow-blue-500/30 flex items-center gap-2 border border-blue-400/30 cursor-pointer"
-          >
-            <Zap className="w-4 h-4 text-yellow-300 fill-yellow-300" />
-            <span>Acceder al Panel de Mensajería (Sin Firebase)</span>
-          </button>
-        </motion.div>
+
 
       </div>
 

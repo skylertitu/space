@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/firebase-admin";
+import { db, hasAdminCredentials } from "@/lib/firebase-admin";
 import { runBroadcastSendLoop } from "@/lib/broadcast/runBroadcastSendLoop";
 import { guardApi } from '@/lib/apiAuth';
 import { requireSuite } from '@/lib/subscriptions/entitlements.server';
@@ -11,7 +11,13 @@ export async function POST(req: Request) {
     const denied = await guardApi(req);
     if (denied) return denied;
     try {
-        const { userId, entityId, broadcastId, resume } = await req.json();
+        if (!hasAdminCredentials()) {
+            return NextResponse.json(
+                { error: "Falta configurar serviceAccountKey.json en el servidor para envíos masivos de fondo." },
+                { status: 503 }
+            );
+        }
+        const { userId, entityId, broadcastId, resume, retryFailed } = await req.json();
         const suiteDenied = await requireSuite(userId, entityId, 'cmo');
         if (suiteDenied) return suiteDenied;
         if (!userId || !entityId || !broadcastId) {
@@ -27,6 +33,7 @@ export async function POST(req: Request) {
             entityId,
             broadcastId,
             resume: Boolean(resume),
+            retryFailed: Boolean(retryFailed),
         });
 
         if (result.error === "not_found") {
@@ -34,6 +41,9 @@ export async function POST(req: Request) {
         }
         if (result.error === "already_completed") {
             return NextResponse.json({ error: "La campaña ya fue completada." }, { status: 409 });
+        }
+        if (result.error === "no_failed") {
+            return NextResponse.json({ error: "Esta campaña no tiene envíos fallidos." }, { status: 409 });
         }
         if (result.error === "already_sending") {
             return NextResponse.json(

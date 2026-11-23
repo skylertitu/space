@@ -14,6 +14,8 @@ interface FileUploadOptions {
     recipientId: string;
     platform?: string;
     caption?: string;
+    entityId?: string;
+    fromPhoneNumberId?: string;
 }
 
 export const useFileUpload = () => {
@@ -27,8 +29,9 @@ export const useFileUpload = () => {
             return;
         }
 
-        const { cardId, groupId, recipientId, platform, caption } = options;
-        if (!cardId || !groupId || !recipientId || !activeEntity) {
+        const { cardId, groupId, recipientId, platform, caption, entityId, fromPhoneNumberId } = options;
+        const tenantId = entityId || activeEntity;
+        if (!cardId || !groupId || !recipientId || !tenantId) {
             toast.error("Faltan datos o contexto (entidad) para enviar el archivo multimedia.");
             return;
         }
@@ -76,7 +79,8 @@ export const useFileUpload = () => {
                                 filename: file.name,
                                 platform,
                                 userId: user.uid,
-                                entityId: activeEntity
+                                entityId: tenantId,
+                                ...(fromPhoneNumberId ? { fromPhoneNumberId } : {}),
                             })
                         });
 
@@ -94,7 +98,7 @@ export const useFileUpload = () => {
                             uploadedAt: Timestamp.now()
                         };
 
-                        await updateDoc(doc(db, 'users', user.uid, 'entities', activeEntity, 'kanban-groups', groupId, 'cards', cardId), {
+                        await updateDoc(doc(db, `users/${user.uid}/entities/${activeEntity || 'life'}/kanban-groups/${groupId}/cards/${cardId}`), {
                             documents: arrayUnion(fileData),
                             history: arrayUnion({
                                 id: `hist_${Date.now()}`,

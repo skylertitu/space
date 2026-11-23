@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { createHash } from 'crypto';
 import { guardApi } from '@/lib/apiAuth';
 import { db } from '@/lib/firebase-admin';
 import { newTelegramSecret } from '@/lib/webhookSignature';
@@ -37,11 +38,20 @@ export async function POST(req: Request) {
             const meRes = await fetch(`https://api.telegram.org/bot${botToken}/getMe`);
             const meData = await meRes.json();
             const botName = meData.ok ? `@${meData.result.username}` : 'Telegram Bot';
+            const botId = meData.ok ? String(meData.result.id) : '';
+            const secretHash = createHash('sha256').update(webhookSecret).digest('hex');
+            await db.doc(`system_mappings/telegram_secrets/items/${secretHash}`).set({
+                userId,
+                entityId,
+                botId,
+                updatedAt: new Date().toISOString(),
+            });
 
             return NextResponse.json({ 
                 success: true, 
                 message: 'Webhook registered successfully', 
                 botName,
+                botId,
                 telegram: data 
             });
         } else {

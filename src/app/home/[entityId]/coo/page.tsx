@@ -6,7 +6,7 @@ export default function COORedirect() {
     const router = useRouter();
     const params = useParams();
     useEffect(() => {
-        router.replace(`/home/${params.entityId}/workspace?role=coo`);
+        router.replace(`/home/${params.entityId}`);
     }, [router, params.entityId]);
     return null;
 }

@@ -92,12 +92,12 @@ export function DepartmentSidebar({ items, title, colorClass = "bg-blue-600" }: 
                                     className={`group flex items-center justify-center ${isCollapsed ? 'p-2' : 'px-4 py-2'} mx-auto rounded-full bg-neutral-900 border border-neutral-800 hover:border-neutral-700 hover:bg-neutral-800 text-neutral-400 hover:text-white transition-all duration-200`}
                                 >
                                     <ChevronLeft className={`w-4 h-4 ${isCollapsed ? '' : 'mr-2 group-hover:-translate-x-0.5 transition-transform'}`} />
-                                    <span className={`text-sm font-medium ${isCollapsed ? 'hidden' : 'block'}`}>Back to Suite</span>
+                                    <span className={`text-sm font-medium ${isCollapsed ? 'hidden' : 'block'}`}>Volver al Menú Personal</span>
                                 </Link>
                             </TooltipTrigger>
                             {isCollapsed && (
                                 <TooltipContent side="right" className="bg-neutral-800 text-white border-neutral-700">
-                                    Back to Suite
+                                    Volver al Menú Personal
                                 </TooltipContent>
                             )}
                         </Tooltip>

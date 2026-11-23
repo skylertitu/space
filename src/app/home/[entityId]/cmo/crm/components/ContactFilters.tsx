@@ -43,6 +43,7 @@ interface ContactFiltersProps {
     openBulkTag: () => void;
     currentView: 'all' | 'Prospecting' | 'In Progress' | 'Closed';
     setCurrentView: (view: 'all' | 'Prospecting' | 'In Progress' | 'Closed') => void;
+    onSaveAudience?: () => void;
 }
 
 export const ContactFilters: React.FC<ContactFiltersProps> = ({
@@ -69,7 +70,8 @@ export const ContactFilters: React.FC<ContactFiltersProps> = ({
     handleBulkDelete,
     openBulkTag,
     currentView,
-    setCurrentView
+    setCurrentView,
+    onSaveAudience,
 }) => {
     return (
         <motion.div
@@ -216,7 +218,17 @@ export const ContactFilters: React.FC<ContactFiltersProps> = ({
                                 )}
                             </div>
 
-                            <DialogFooter className="mt-6">
+                            <DialogFooter className="mt-6 flex-col gap-2 sm:flex-col">
+                                {onSaveAudience && (
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={onSaveAudience}
+                                        className="w-full h-12 rounded-[1.25rem] border-white/10 bg-white/5 text-white uppercase tracking-widest text-xs"
+                                    >
+                                        Guardar audiencia
+                                    </Button>
+                                )}
                                 <Button
                                     onClick={() => setIsFilterOpen(false)}
                                     className="bg-blue-600 hover:bg-blue-500 w-full h-12 rounded-[1.25rem] font-bold shadow-xl shadow-blue-600/20 uppercase tracking-widest text-xs"

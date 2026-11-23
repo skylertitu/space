@@ -125,11 +125,11 @@ interface Entity {
 
 const DEFAULT_DEMO_ENTITIES: Entity[] = [
     {
-        id: 'mensajeria',
-        name: 'Plataforma de Mensajería Automática',
-        slug: 'mensajeria',
+        id: 'personal',
+        name: 'Personal',
+        slug: 'personal',
         description: 'Bandeja omnicanal, difusiones y chatbots automatizados',
-        type: 'empresa',
+        type: 'persona',
         status: 'active',
     }
 ];
@@ -205,15 +205,26 @@ export default function NucleoPage() {
                 loadLocalFallback();
                 return;
             }
+
+            // Timeout de seguridad: si Firestore tarda o no está inicializado, no congelar la pantalla
+            const safetyTimeout = setTimeout(() => {
+                setEntities((prev) => prev.length > 0 ? prev : DEFAULT_DEMO_ENTITIES);
+            }, 1200);
+
             const q = collection(db, `users/${currentUser.uid}/entities`);
             const unsubscribe = onSnapshot(q, (snapshot) => {
+                clearTimeout(safetyTimeout);
                 const ents = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Entity));
                 setEntities(ents.length > 0 ? ents : DEFAULT_DEMO_ENTITIES);
             }, (error) => {
+                clearTimeout(safetyTimeout);
                 console.warn("Could not load entities from Firestore (handled):", error);
                 loadLocalFallback();
             });
-            return () => unsubscribe();
+            return () => {
+                clearTimeout(safetyTimeout);
+                unsubscribe();
+            };
         }
     }, [currentUser]);
 
@@ -232,16 +243,15 @@ export default function NucleoPage() {
 
     const ghostEntities = findGhostEntities(entities);
     const ghostIds = new Set(ghostEntities.map((e) => e.id));
-    const listedEntities = managementMode
-        ? entities
-        : filterRealEntities(entities).filter((e) => e.status !== 'archived');
+    const realEntities = filterRealEntities(entities).filter((e) => e.status !== 'archived');
+    // Filtro estricto: en esta plataforma SOLO se muestran entornos de tipo personal
+    const listedEntities = (managementMode ? entities : realEntities).filter(
+        (e) => e.type === 'persona'
+    );
 
     const entityTypeLabel = (entity: Entity) => {
         if (entity.status === 'archived') return 'Archived';
-        if (entity.type === 'persona') return 'Personal';
-        if (entity.type === 'creador') return 'Creator';
-        if (entity.type === 'empresa') return 'Business';
-        return 'Workspace';
+        return 'Personal';
     };
 
     const handleLogout = async () => {
@@ -279,7 +289,7 @@ export default function NucleoPage() {
         if (!currentUser || !inputValue.trim()) return;
         setCreatingProgress(true);
 
-        const finalType = creationCategory === 'persona' ? 'persona' : professionalSubtype;
+        const finalType = 'persona';
         const randomId = `bs_${Math.random().toString(36).substring(2, 9)}`;
         const baseSlug = slugifyEntityName(inputValue) || randomId;
 
@@ -299,11 +309,9 @@ export default function NucleoPage() {
                 } catch {}
                 return updated;
             });
-            toast.success('Entorno creado con éxito');
+            toast.success('Entorno personal creado con éxito');
             setIsCreating(false);
             setInputValue('');
-            setCreationCategory('profesional');
-            setProfessionalSubtype('empresa');
             setCreatingProgress(false);
             return;
         }
@@ -933,146 +941,50 @@ export default function NucleoPage() {
                 {/* Modal: Create */}
                 {isCreating && (
                     <Modal
-                        title="Create new environment"
-                        subtitle="Choose an identity category and model to get started."
-                        onClose={() => { setIsCreating(false); setCreationCategory('profesional'); setProfessionalSubtype('empresa'); }}
+                        title="Crear entorno personal"
+                        subtitle="Ingresa el nombre para tu nuevo espacio de mensajería y automatización."
+                        onClose={() => { setIsCreating(false); setInputValue(''); }}
                     >
                         <div className="space-y-6">
-                            
-                            {/* Primary Category Selector: Personal vs Professional */}
-                            <div>
-                                <label className="block text-xs font-light uppercase tracking-wider text-white/60 mb-3">Category</label>
-                                <div className="grid grid-cols-2 gap-3.5">
-                                    <button
-                                        type="button"
-                                        onClick={() => setCreationCategory('persona')}
-                                        className={`p-4 rounded-2xl border flex flex-col items-center gap-3 transition-all duration-300 ${
-                                            creationCategory === 'persona'
-                                                ? 'border-emerald-400/80 bg-gradient-to-b from-emerald-500/25 to-emerald-500/5 text-white shadow-[0_0_30px_rgba(16,185,129,0.25)] scale-[1.02]'
-                                                : 'border-white/15 bg-white/[0.03] text-white/60 hover:text-white hover:bg-white/[0.07] hover:border-white/25'
-                                        }`}
-                                    >
-                                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all ${
-                                            creationCategory === 'persona' ? 'bg-emerald-500/25 text-emerald-300 shadow-[0_0_20px_rgba(16,185,129,0.4)]' : 'bg-white/5 text-white/50'
-                                        }`}>
-                                            <UserIcon className="w-8 h-8" />
-                                        </div>
-                                        <div className="text-center">
-                                            <span className="text-sm font-light tracking-tight block">Personal</span>
-                                            <span className="text-[11px] text-white/45 block mt-0.5 font-light tracking-tight">Individual & Life OS</span>
-                                        </div>
-                                    </button>
-
-                                    <button
-                                        type="button"
-                                        onClick={() => setCreationCategory('profesional')}
-                                        className={`p-4 rounded-2xl border flex flex-col items-center gap-3 transition-all duration-300 ${
-                                            creationCategory === 'profesional'
-                                                ? 'border-blue-400/80 bg-gradient-to-b from-blue-500/25 to-blue-500/5 text-white shadow-[0_0_30px_rgba(59,130,246,0.25)] scale-[1.02]'
-                                                : 'border-white/15 bg-white/[0.03] text-white/60 hover:text-white hover:bg-white/[0.07] hover:border-white/25'
-                                        }`}
-                                    >
-                                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all ${
-                                            creationCategory === 'profesional' ? 'bg-blue-500/25 text-blue-300 shadow-[0_0_20px_rgba(59,130,246,0.4)]' : 'bg-white/5 text-white/50'
-                                        }`}>
-                                            <Briefcase className="w-8 h-8" />
-                                        </div>
-                                        <div className="text-center">
-                                            <span className="text-sm font-light tracking-tight block">Professional</span>
-                                            <span className="text-[11px] text-white/45 block mt-0.5 font-light tracking-tight">Business & Organization</span>
-                                        </div>
-                                    </button>
+                            <div className="flex justify-center my-1">
+                                <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-blue-500/20 to-purple-500/20 border border-white/10 flex items-center justify-center text-cyan-300 shadow-[0_0_20px_rgba(59,130,246,0.25)]">
+                                    <UserIcon className="w-8 h-8" />
                                 </div>
                             </div>
 
-                            {/* Sub-options for Professional: Creator vs Company - Sin contenedor pesado */}
-                            {creationCategory === 'profesional' && (
-                                <motion.div
-                                    initial={{ opacity: 0, y: -6 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, y: -6 }}
-                                    transition={{ duration: 0.2 }}
-                                    className="space-y-3"
-                                >
-                                    <label className="block text-xs font-light uppercase tracking-wider text-white/60">
-                                        Professional Model
-                                    </label>
-                                    <div className="grid grid-cols-2 gap-3.5">
-                                        <button
-                                            type="button"
-                                            onClick={() => setProfessionalSubtype('creador')}
-                                            className={`p-4 rounded-2xl border flex flex-col items-center gap-2.5 transition-all duration-300 ${
-                                                professionalSubtype === 'creador'
-                                                    ? 'border-cyan-400/80 bg-gradient-to-b from-cyan-500/25 to-cyan-500/5 text-white shadow-[0_0_25px_rgba(6,182,212,0.25)] scale-[1.02]'
-                                                    : 'border-white/15 bg-white/[0.03] text-white/60 hover:bg-white/[0.07] hover:border-white/25 hover:text-white'
-                                            }`}
-                                        >
-                                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${
-                                                professionalSubtype === 'creador' ? 'bg-cyan-500/25 text-cyan-300 shadow-[0_0_15px_rgba(6,182,212,0.4)]' : 'bg-white/5 text-white/50'
-                                            }`}>
-                                                <Sparkles className="w-7 h-7" />
-                                            </div>
-                                            <div className="text-center">
-                                                <span className="text-xs font-light tracking-tight block">Creator</span>
-                                                <span className="text-[10px] text-white/50 block mt-0.5 font-light tracking-tight">Freelance & Solo</span>
-                                            </div>
-                                        </button>
-
-                                        <button
-                                            type="button"
-                                            onClick={() => setProfessionalSubtype('empresa')}
-                                            className={`p-4 rounded-2xl border flex flex-col items-center gap-2.5 transition-all duration-300 ${
-                                                professionalSubtype === 'empresa'
-                                                    ? 'border-blue-400/80 bg-gradient-to-b from-blue-500/25 to-blue-500/5 text-white shadow-[0_0_25px_rgba(59,130,246,0.25)] scale-[1.02]'
-                                                    : 'border-white/15 bg-white/[0.03] text-white/60 hover:bg-white/[0.07] hover:border-white/25 hover:text-white'
-                                            }`}
-                                        >
-                                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${
-                                                professionalSubtype === 'empresa' ? 'bg-blue-500/25 text-blue-300 shadow-[0_0_15px_rgba(59,130,246,0.4)]' : 'bg-white/5 text-white/50'
-                                            }`}>
-                                                <Building2 className="w-7 h-7" />
-                                            </div>
-                                            <div className="text-center">
-                                                <span className="text-xs font-light tracking-tight block">Company</span>
-                                                <span className="text-[10px] text-white/50 block mt-0.5 font-light tracking-tight">Business & Teams</span>
-                                            </div>
-                                        </button>
-                                    </div>
-                                </motion.div>
-                            )}
-
                             <div className="space-y-1.5">
-                                <label className="block text-xs font-light uppercase tracking-wider text-white/60">Environment Name</label>
+                                <label className="block text-xs font-light uppercase tracking-wider text-white/60">Nombre del Entorno</label>
                                 <input
                                     type="text"
                                     value={inputValue}
                                     onChange={(e) => setInputValue(e.target.value)}
                                     className="w-full bg-white/[0.05] border border-white/15 rounded-2xl px-4 py-3.5 text-sm font-light tracking-tight text-white placeholder:text-white/30 focus:border-blue-400 focus:bg-white/[0.08] focus:ring-4 focus:ring-blue-500/15 focus:outline-none transition-all"
-                                    placeholder={creationCategory === 'persona' ? "e.g. My Personal Space..." : professionalSubtype === 'creador' ? "e.g. elizmey Studio..." : "e.g. Udreamms LLC..."}
+                                    placeholder="Ej: Mi Espacio Personal"
                                     autoFocus
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' && inputValue.trim() && !creatingProgress) {
+                                            handleCreateEntity();
+                                        }
+                                    }}
                                 />
                             </div>
-                            
+
                             <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/10">
                                 <button
                                     type="button"
-                                    onClick={() => { setIsCreating(false); setCreationCategory('profesional'); setProfessionalSubtype('empresa'); }}
+                                    onClick={() => { setIsCreating(false); setInputValue(''); }}
                                     className="h-11 px-5 rounded-2xl border border-white/15 bg-white/[0.04] hover:bg-white/[0.1] text-white/70 hover:text-white text-xs font-light tracking-tight transition-all"
                                 >
-                                    Cancel
+                                    Cancelar
                                 </button>
                                 <Button
                                     onClick={handleCreateEntity}
                                     disabled={creatingProgress || !inputValue.trim()}
-                                    className={`h-11 px-6 text-white rounded-2xl text-xs font-light tracking-tight transition-all shadow-lg flex items-center gap-2 ${
-                                        creationCategory === 'persona'
-                                            ? 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-600/30'
-                                            : 'bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 shadow-blue-600/40'
-                                    }`}
+                                    className="h-11 px-6 bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 shadow-blue-600/40 text-white rounded-2xl text-xs font-light tracking-tight transition-all shadow-lg flex items-center gap-2"
                                 >
                                     <span className="inline-flex items-center gap-2">
                                         {creatingProgress && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                                        <span>{creatingProgress ? 'Creating...' : 'Create environment'}</span>
+                                        <span>{creatingProgress ? 'Creando...' : 'Crear entorno personal'}</span>
                                     </span>
                                 </Button>
                             </div>
@@ -1081,8 +993,8 @@ export default function NucleoPage() {
                 )}
             </AnimatePresence>
 
-            {/* Floating Pill AI Bar / Trigger Arrow */}
             <AskRooseveltBar />
+
         </div>
     );
 }

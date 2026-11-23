@@ -8,6 +8,7 @@ import { isMetaCommentChange, parseMetaChange } from '@/lib/automation/metaWebho
 import fs from 'fs';
 import { checkMetaSignature } from '@/lib/webhookSignature';
 import { getClaim, claimInBackground, claimsRequired } from '@/lib/integrationClaims';
+import { deliverInboundToOpenConversation } from '@/lib/conversations/channelInbound';
 
 function debugLog(msg: string) {
     const logStr = `\n[${new Date().toISOString()}] [Meta Webhook Debug] ${msg}`;
@@ -378,6 +379,31 @@ export async function POST(req: Request) {
                 cardUpdate['botState.lastCommentId'] = commentId;
             }
             if (!targetCardDoc.data()?.contactName || isGenericProfileName(targetCardDoc.data()?.contactName)) cardUpdate.contactName = finalResolvedName;
+
+            const delivered = await deliverInboundToOpenConversation({
+                db,
+                tenantPath: entityPath,
+                cardId: targetCardDoc.id,
+                cardData: targetCardDoc.data(),
+                newMessage,
+                queueItem,
+                alreadyQueued,
+                displayText: text,
+                fields: {
+                    channel: channelKey,
+                    primary_channel: channelKey,
+                    source: sourceLabel,
+                    metaSenderId: senderId,
+                    [`platform_ids.${provider.toLowerCase()}`]: senderId,
+                    contactName: cardUpdate.contactName || finalResolvedName,
+                },
+            });
+            if (delivered) {
+                delete cardUpdate.messages;
+                delete cardUpdate['botState.messageQueue'];
+                delete cardUpdate['botState.engine'];
+                cardUpdate.conversationId = targetCardDoc.data()?.conversationId || targetCardDoc.id;
+            }
 
             await targetCardDoc.ref.update(cardUpdate);
             if (existingContactId) {

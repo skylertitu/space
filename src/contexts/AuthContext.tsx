@@ -14,9 +14,9 @@ import { installApiAuthFetch } from '@/lib/installApiAuthFetch';
 installApiAuthFetch();
 
 export const DEMO_USER = {
-    uid: 'demo_user_mensajeria',
-    email: 'admin@mensajeria.local',
-    displayName: 'Admin Mensajería',
+    uid: 'demo_user_elizmey',
+    email: 'admin@elizmey.local',
+    displayName: 'elizmey',
     photoURL: '/assets/rai-logo-circular.png',
     emailVerified: true,
     isAnonymous: false,
@@ -129,116 +129,111 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                         localStorage.setItem('elizmey_last_uid', user.uid);
                     } catch { /* localStorage no disponible */ }
 
-                    try {
-                        const userDocRef = doc(db, 'users', user.uid);
-                        const docSnap = await getDoc(userDocRef);
-                        if (!docSnap.exists()) {
-                            // 1. Root Document
-                            await setDoc(userDocRef, {
-                                name: user.displayName || 'Unnamed User',
-                                email: user.email,
-                                createdAt: new Date(),
-                                lastLogin: new Date()
-                            });
-                            
-                            const randomCompanyId = `company_${Math.random().toString(36).substring(2, 9)}`;
-
-                            // 2. Seed Entities ('life', and one dynamic company)
-                            const initialEntities = [
-                                { id: 'life', name: 'Personal', desc: 'Personal OS', type: 'persona' },
-                                { id: randomCompanyId, name: 'Mi Primera Empresa', desc: 'Business OS', type: 'empresa' }
-                            ];
-                            const signedInWithGoogle = user.providerData.some((provider) => provider.providerId === 'google.com');
-
-                            // Seed entities and settings in parallel
-                            await Promise.all(initialEntities.map(async (entity) => {
-                                const slug = await generateUniqueEntitySlug(user.uid, entity.name, entity.id);
-                                await Promise.all([
-                                    setDoc(doc(db, `users/${user.uid}/entities/${entity.id}`), {
-                                        initialized: true,
-                                        name: entity.name,
-                                        slug,
-                                        type: entity.type,
-                                        description: entity.desc,
-                                        createdAt: new Date()
-                                    }),
-                                    setDoc(doc(db, `users/${user.uid}/entities/${entity.id}/settings/general`), {
-                                        theme: 'dark'
-                                    }),
-                                    setDoc(doc(db, `users/${user.uid}/entities/${entity.id}/integrations/_init`), {
-                                        encrypted: false,
-                                        updatedAt: new Date()
-                                    })
-                                ]);
-                                await claimEntitySlug(user.uid, entity.id, slug);
-                                await provisionEntityMold(db, user.uid, entity.id);
-                            }));
-
-                            if (signedInWithGoogle && typeof window !== 'undefined') {
-                                const { queueGmailBootstrap } = await import('@/lib/integrations/gmailAutoConnect');
-                                queueGmailBootstrap({
-                                    userId: user.uid,
-                                    email: user.email,
-                                    entityIds: initialEntities.map((entity) => entity.id),
-                                });
-                            }
-                        } else {
-                            // If user already exists, update last login...
-                            await updateDoc(userDocRef, {
-                                lastLogin: new Date()
-                            });
-
-                            // ...and migrate ALL their entities to the latest platform mold
-                            // version, so every client gets the newest data structures
-                            // (reception column, starter bot, etc.) without visiting a
-                            // specific page. Cheap: skips entities already up to date.
-                            try {
-                                const entitiesSnap = await getDocs(collection(db, `users/${user.uid}/entities`));
-                                const realEntities = filterRealEntities(
-                                    entitiesSnap.docs.map((entityDoc) => ({
-                                        id: entityDoc.id,
-                                        name: entityDoc.data().name,
-                                        slug: entityDoc.data().slug,
-                                    }))
-                                );
-                                await Promise.all(
-                                    realEntities.map((entity) =>
-                                        ensureEntityMoldUpToDate(db, user.uid, entity.id).catch((err) =>
-                                            console.error(`Mold migration failed for entity ${entity.id}:`, err)
-                                        )
-                                    )
-                                );
-                            } catch (err) {
-                                console.error('Mold migration sweep failed:', err);
-                            }
-                        }
-                    } catch (error) {
-                        console.error("Error creating isolated user document:", error);
-                    }
-                }
-                if (user) {
+                    // INMEDIATO: Fijar usuario autenticado y liberar loading para que la UI responda al instante
                     setCurrentUser(user);
-                    setIsDemo(false);
-                } else {
-                    let isDemoSaved = false;
-                    try {
-                        isDemoSaved = typeof window !== 'undefined' && (
-                            localStorage.getItem('elizmey_demo_mode') === 'true' ||
-                            localStorage.getItem('roosevelt_demo_mode') === 'true'
-                        );
-                    } catch {}
+                    setLoading(false);
 
-                    if (isDemoSaved) {
-                        setCurrentUser(DEMO_USER);
-                        const ent = localStorage.getItem('elizmey_active_entity') || localStorage.getItem('roosevelt_active_entity') || 'mensajeria';
-                        const entRoute = localStorage.getItem('elizmey_active_entity_route') || localStorage.getItem('roosevelt_active_entity_route') || 'mensajeria';
-                        setActiveEntityState(ent);
-                        setActiveEntityRoute(entRoute);
-                        setIsDemo(true);
-                    } else {
-                        setCurrentUser(null);
-                        setIsDemo(false);
-                    }
+                    // Sincronización y provisión en segundo plano (con timeout para no congelar la app si Firestore está inalcanzable)
+                    (async () => {
+                        try {
+                            const initPromise = (async () => {
+                                const userDocRef = doc(db, 'users', user.uid);
+                                const docSnap = await getDoc(userDocRef);
+                                if (!docSnap.exists()) {
+                                    // 1. Root Document
+                                    await setDoc(userDocRef, {
+                                        name: user.displayName || 'Unnamed User',
+                                        email: user.email,
+                                        createdAt: new Date(),
+                                        lastLogin: new Date()
+                                    });
+                                    
+                                    const randomCompanyId = `company_${Math.random().toString(36).substring(2, 9)}`;
+
+                                    // 2. Seed Entities ('life', and one dynamic company)
+                                    const initialEntities = [
+                                        { id: 'life', name: 'Personal', desc: 'Personal OS', type: 'persona' },
+                                        { id: randomCompanyId, name: 'Mi Primera Empresa', desc: 'Business OS', type: 'empresa' }
+                                    ];
+                                    const signedInWithGoogle = user.providerData.some((provider) => provider.providerId === 'google.com');
+
+                                    // Seed entities and settings in parallel
+                                    await Promise.all(initialEntities.map(async (entity) => {
+                                        const slug = await generateUniqueEntitySlug(user.uid, entity.name, entity.id);
+                                        await Promise.all([
+                                            setDoc(doc(db, `users/${user.uid}/entities/${entity.id}`), {
+                                                initialized: true,
+                                                name: entity.name,
+                                                slug,
+                                                type: entity.type,
+                                                description: entity.desc,
+                                                createdAt: new Date()
+                                            }),
+                                            setDoc(doc(db, `users/${user.uid}/entities/${entity.id}/settings/general`), {
+                                                theme: 'dark'
+                                            }),
+                                            setDoc(doc(db, `users/${user.uid}/entities/${entity.id}/integrations/_init`), {
+                                                encrypted: false,
+                                                updatedAt: new Date()
+                                            })
+                                        ]);
+                                        await claimEntitySlug(user.uid, entity.id, slug);
+                                        await provisionEntityMold(db, user.uid, entity.id);
+                                    }));
+
+                                    if (signedInWithGoogle && typeof window !== 'undefined') {
+                                        const { queueGmailBootstrap } = await import('@/lib/integrations/gmailAutoConnect');
+                                        queueGmailBootstrap({
+                                            userId: user.uid,
+                                            email: user.email,
+                                            entityIds: initialEntities.map((entity) => entity.id),
+                                        });
+                                    }
+                                } else {
+                                    // If user already exists, update last login...
+                                    await updateDoc(userDocRef, {
+                                        lastLogin: new Date()
+                                    });
+
+                                    // ...and migrate ALL their entities to the latest platform mold
+                                    try {
+                                        const entitiesSnap = await getDocs(collection(db, `users/${user.uid}/entities`));
+                                        const realEntities = filterRealEntities(
+                                            entitiesSnap.docs.map((entityDoc) => ({
+                                                id: entityDoc.id,
+                                                name: entityDoc.data().name,
+                                                slug: entityDoc.data().slug,
+                                            }))
+                                        );
+                                        await Promise.all(
+                                            realEntities.map((entity) =>
+                                                ensureEntityMoldUpToDate(db, user.uid, entity.id).catch((err) =>
+                                                    console.error(`Mold migration failed for entity ${entity.id}:`, err)
+                                                )
+                                            )
+                                        );
+                                    } catch (err) {
+                                        console.error('Mold migration sweep failed:', err);
+                                    }
+                                }
+                            })();
+
+                            const timeoutPromise = new Promise((_, reject) =>
+                                setTimeout(() => reject(new Error('Firestore init timed out')), 4000)
+                            );
+                            await Promise.race([initPromise, timeoutPromise]);
+                        } catch (error) {
+                            console.warn("Firestore user sync/provisioning handled (non-blocking):", error);
+                        }
+                    })();
+                } else {
+                    try {
+                        localStorage.removeItem('elizmey_demo_mode');
+                        localStorage.removeItem('roosevelt_demo_mode');
+                    } catch { /* localStorage no disponible */ }
+                    setCurrentUser(null);
+                    setIsDemo(false);
+                    setLoading(false);
                 }
                 setLoading(false);
             });

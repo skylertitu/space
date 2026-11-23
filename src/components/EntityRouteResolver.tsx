@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { collection, onSnapshot, doc, getDoc } from 'firebase/firestore';
+import { collection, onSnapshot } from 'firebase/firestore';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   EntityRouteProvider,
@@ -48,10 +48,10 @@ export function EntityRouteResolver({ segment, children }: EntityRouteResolverPr
       return;
     }
 
-    // Modo Standalone / Demo: Desconectar de la base de datos externa y resolver inmediatamente
-    if (segment === 'mensajeria' || currentUser?.uid.startsWith('demo')) {
-      let entName = 'Plataforma de Mensajería Automática';
-      let entType = 'empresa';
+    // Modo Inmediato / Personal / Demo: Desconectar de la base de datos externa y resolver inmediatamente
+    if (segment === 'personal' || segment === 'life' || segment === 'mensajeria' || currentUser?.uid.startsWith('demo')) {
+      let entName = segment === 'personal' || segment === 'life' ? 'Personal' : 'Plataforma de Mensajería Automática';
+      let entType = segment === 'personal' || segment === 'life' ? 'persona' : 'empresa';
       let entId = segment;
       try {
         const stored = localStorage.getItem('elizmey_demo_entities');
@@ -78,10 +78,42 @@ export function EntityRouteResolver({ segment, children }: EntityRouteResolverPr
     }
 
     let cancelled = false;
+
+    // Timeout de seguridad: si Firestore no responde en 1.5s, resolver con fallback para no congelar la navegación
+    const safetyTimer = setTimeout(() => {
+      if (cancelled) return;
+      console.warn('[EntityRouteResolver] Firestore snapshot timeout, using fallback.');
+      let entName = segment === 'personal' || segment === 'life' ? 'Personal' : segment;
+      let entType = segment === 'personal' || segment === 'life' ? 'persona' : 'empresa';
+      let entId = segment;
+      try {
+        const stored = localStorage.getItem('elizmey_demo_entities');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          const found = parsed.find((e: any) => e.slug === segment || e.id === segment);
+          if (found) {
+            entName = found.name || entName;
+            entType = found.type || entType;
+            entId = found.id || entId;
+          }
+        }
+      } catch {}
+      const contextValue: EntityRouteContextValue = {
+        firestoreId: entId,
+        routeSegment: segment,
+        entityName: entName,
+        entityType: entType,
+      };
+      setActiveEntity(entId, segment);
+      setRouteContext(contextValue);
+      setReady(true);
+    }, 1500);
+
     const unsub = onSnapshot(
       collection(db, `users/${currentUser.uid}/entities`),
       (snapshot) => {
         if (cancelled) return;
+        clearTimeout(safetyTimer);
 
         const entities: EntitySlugRecord[] = snapshot.docs.map((d) => ({
           id: d.id,
@@ -157,6 +189,7 @@ export function EntityRouteResolver({ segment, children }: EntityRouteResolverPr
         })();
       },
       (error) => {
+        clearTimeout(safetyTimer);
         console.warn('[EntityRouteResolver] Firestore permission error, applying local fallback:', error);
         let entName = segment;
         let entType = 'empresa';
@@ -187,6 +220,7 @@ export function EntityRouteResolver({ segment, children }: EntityRouteResolverPr
 
     return () => {
       cancelled = true;
+      clearTimeout(safetyTimer);
       unsub();
     };
   }, [currentUser, loading, segment, router, setActiveEntity]);

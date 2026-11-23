@@ -56,22 +56,44 @@ const pick = (data: Record<string, any> | undefined, keys: string[]) => {
     return '';
 };
 
+const WHATSAPP_SLOTS = new Set(['general', 'support', 'broadcast']);
+
 /** ¿La integración de ese tenant sigue conectada con ese id? (para decidir si un reclamo anterior sigue vigente) */
 async function claimStillHeld(provider: ClaimProvider, externalId: string, owner: ClaimTenant): Promise<boolean> {
     const f = FIELDS[provider];
     const snap = await db.doc(`users/${owner.userId}/entities/${owner.entityId}/integrations/${f.docId}`).get();
     const d = snap.data();
-    return snap.exists && d?.status === 'Connected' && pick(d, f.id) === externalId;
+    if (snap.exists && d?.status === 'Connected' && pick(d, f.id) === externalId) return true;
+    if (provider !== 'whatsapp') return false;
+    const numbers = await db.collection(`users/${owner.userId}/entities/${owner.entityId}/whatsapp_numbers`).get();
+    return numbers.docs.some((doc) => {
+        const data = doc.data();
+        return data?.status === 'Connected' && pick(data, f.id) === externalId;
+    });
+}
+
+async function readWhatsAppSource(tenant: ClaimTenant, slot?: string): Promise<Record<string, any> | undefined> {
+    if (slot && WHATSAPP_SLOTS.has(slot) && slot !== 'general') {
+        const slotSnap = await db.doc(`users/${tenant.userId}/entities/${tenant.entityId}/whatsapp_numbers/${slot}`).get();
+        return slotSnap.data();
+    }
+    const snap = await db.doc(`users/${tenant.userId}/entities/${tenant.entityId}/integrations/whatsapp`).get();
+    return snap.data();
 }
 
 /**
  * Verifica y registra el reclamo de una integración YA guardada por el cliente.
  * Lee id y token del documento (no del cuerpo de la petición) y los comprueba con Meta.
  */
-export async function claimFromStoredIntegration(provider: ClaimProvider, tenant: ClaimTenant): Promise<ClaimResult> {
+export async function claimFromStoredIntegration(
+    provider: ClaimProvider,
+    tenant: ClaimTenant,
+    slot?: string
+): Promise<ClaimResult> {
     const f = FIELDS[provider];
-    const snap = await db.doc(`users/${tenant.userId}/entities/${tenant.entityId}/integrations/${f.docId}`).get();
-    const data = snap.data();
+    const data = provider === 'whatsapp'
+        ? await readWhatsAppSource(tenant, slot)
+        : (await db.doc(`users/${tenant.userId}/entities/${tenant.entityId}/integrations/${f.docId}`).get()).data();
     const externalId = pick(data, f.id);
     const token = pick(data, f.token);
     if (!externalId || !token) return { ok: false, reason: 'missing_data', message: 'Falta el id o el token de la integración.' };
@@ -92,7 +114,23 @@ export async function claimFromStoredIntegration(provider: ClaimProvider, tenant
         provider,
         verifiedAt: admin.firestore.FieldValue.serverTimestamp(),
     });
+    if (provider === 'whatsapp') {
+        const { registerWhatsAppTenantMapping } = await import('@/lib/whatsappTenant');
+        await registerWhatsAppTenantMapping(externalId, tenant.userId, tenant.entityId);
+    }
     return { ok: true };
+}
+
+/** Suelta el reclamo solo si pertenece a esa entidad. El navegador no puede borrar integration_claims. */
+export async function releaseClaim(provider: ClaimProvider, externalId: string, tenant: ClaimTenant): Promise<void> {
+    const id = String(externalId || '').trim();
+    if (!id) return;
+    const existing = await getClaim(provider, id);
+    if (!existing || existing.userId !== tenant.userId || existing.entityId !== tenant.entityId) return;
+    await claimRef(provider, id).delete();
+    if (provider === 'whatsapp') {
+        await db.doc(`system_mappings/whatsapp_numbers/numbers/${id}`).delete().catch(() => {});
+    }
 }
 
 /** Verificación diferida para integraciones antiguas: si Meta confirma, se registra el reclamo (sin intervención del cliente). */

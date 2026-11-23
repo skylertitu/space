@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { guardApi } from '@/lib/apiAuth';
-import { claimFromStoredIntegration, type ClaimProvider } from '@/lib/integrationClaims';
+import { claimFromStoredIntegration, releaseClaim, type ClaimProvider } from '@/lib/integrationClaims';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,11 +14,18 @@ export async function POST(req: Request) {
     const denied = await guardApi(req);
     if (denied) return denied;
     try {
-        const { provider, userId, entityId } = await req.json();
+        const { provider, userId, entityId, slot, action, externalId } = await req.json();
         if (!PROVIDERS.has(provider) || !userId || !entityId) {
             return NextResponse.json({ ok: false, message: 'Parámetros inválidos.' }, { status: 400 });
         }
-        const result = await claimFromStoredIntegration(provider, { userId, entityId });
+        if (action === 'release') {
+            if (!externalId) {
+                return NextResponse.json({ ok: false, message: 'Falta el id a soltar.' }, { status: 400 });
+            }
+            await releaseClaim(provider, String(externalId), { userId, entityId });
+            return NextResponse.json({ ok: true });
+        }
+        const result = await claimFromStoredIntegration(provider, { userId, entityId }, slot);
         if (result.ok) return NextResponse.json({ ok: true });
         const status = result.reason === 'conflict' ? 409 : result.reason === 'not_owner' ? 403 : 400;
         return NextResponse.json({ ok: false, reason: result.reason, message: result.message }, { status });

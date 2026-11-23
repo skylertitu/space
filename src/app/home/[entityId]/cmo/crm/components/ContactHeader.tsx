@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { RefreshCw, UserPlus, Trash2, Download } from 'lucide-react';
+import { RefreshCw, UserPlus, Trash2, Download, ArrowLeft } from 'lucide-react';
+import { useRouter, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -56,6 +57,10 @@ export const ContactHeader: React.FC<ContactHeaderProps> = ({
     selectedCount,
     filteredCount
 }) => {
+    const router = useRouter();
+    const params = useParams();
+    const entityId = (params?.entityId as string) || '';
+
     return (
         <motion.div
             initial={{ opacity: 0, x: -10 }}
@@ -64,7 +69,7 @@ export const ContactHeader: React.FC<ContactHeaderProps> = ({
         >
             <div>
                 <h1 className={cn("font-medium tracking-tight transition-all uppercase whitespace-nowrap", isChatOpen ? "text-base" : "text-base sm:text-2xl")}>
-                    Control Center <span className="text-blue-500">/ Contacts</span>
+                    Audiencias <span className="text-blue-500">/ Contactos</span>
                 </h1>
             </div>
 

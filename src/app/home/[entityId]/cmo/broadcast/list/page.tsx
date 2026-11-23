@@ -1,17 +1,19 @@
 "use client";
 
 import React, { useState, useMemo, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { 
     Search, 
     Table as TableIcon, 
     Calendar as CalendarIcon, 
     Plus, 
     MoreHorizontal, 
-    Megaphone,
-    ChevronDown,
-    Loader2,
-    Clock,
-    Users
+    Megaphone, 
+    ChevronDown, 
+    Loader2, 
+    Clock, 
+    Users,
+    ArrowLeft
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,7 +24,6 @@ import { useEntityRoute } from "@/hooks/useEntityRoute";
 import { toast } from "sonner";
 
 // Modularized Component Imports
-import SidebarFilters from "./components/SidebarFilters";
 import BroadcastsTable from "./components/BroadcastsTable";
 import DeleteBroadcastModal from "./components/DeleteBroadcastModal";
 import CampaignResults from "./components/CampaignResults";
@@ -42,6 +43,7 @@ import {
     launchBroadcast,
     finalizeBroadcast,
 } from "./lib/broadcastService";
+import { broadcastScheduleIsDue } from "@/lib/broadcast/scheduleDue";
 
 export type { Broadcast } from "./lib/types";
 
@@ -49,11 +51,11 @@ type SortColumn = "status" | "broadcastTime" | "name";
 type SortOrder = "asc" | "desc" | null;
 
 export default function BroadcastsListPage() {
+    const router = useRouter();
     const { currentUser } = useAuth();
     const { firestoreId: entityId, routeSegment } = useEntityRoute();
 
     // Layout states
-    const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(true);
     const [isRightSidebarOpen, setIsRightSidebarOpen] = useState<boolean>(false);
     const [sidebarMode, setSidebarMode] = useState<"create" | "view" | "edit">("create");
     const [viewMode, setViewMode] = useState<"Table" | "Calendar">("Table");
@@ -105,6 +107,33 @@ export default function BroadcastsListPage() {
                 finalizeBroadcast(currentUser.uid!, entityId, b.id).catch(() => {
                     finalizeTriedRef.current.delete(b.id);
                 });
+            });
+    }, [broadcasts, currentUser?.uid, entityId]);
+
+    // Si la hora programada ya pasó, la campaña sale sola. Una a la vez.
+    const dueLaunchRef = useRef<Set<string>>(new Set());
+    const dueLaunchingRef = useRef(false);
+    useEffect(() => {
+        if (!currentUser?.uid || !entityId || dueLaunchingRef.current) return;
+        const due = broadcasts.find(
+            (b) =>
+                b.status === "Scheduled" &&
+                broadcastScheduleIsDue(b.scheduleAt || b.broadcastTime) &&
+                !dueLaunchRef.current.has(b.id)
+        );
+        if (!due) return;
+        dueLaunchRef.current.add(due.id);
+        dueLaunchingRef.current = true;
+        launchBroadcast(currentUser.uid, entityId, due.id)
+            .then((result) => {
+                if (result.ok) toast.success(`Campaña programada en envío: ${due.name}`);
+                else dueLaunchRef.current.delete(due.id);
+            })
+            .catch(() => {
+                dueLaunchRef.current.delete(due.id);
+            })
+            .finally(() => {
+                dueLaunchingRef.current = false;
             });
     }, [broadcasts, currentUser?.uid, entityId]);
 
@@ -212,6 +241,21 @@ export default function BroadcastsListPage() {
 
         return list;
     }, [broadcasts, searchQuery, selectedFilter, sortColumn, sortOrder]);
+
+    const calendarGroups = useMemo(() => {
+        const groups = new Map<string, Broadcast[]>();
+        processedBroadcasts.forEach((broadcast) => {
+            const raw = broadcast.scheduleAt || (broadcast.broadcastTime && broadcast.broadcastTime !== "-" ? broadcast.broadcastTime : "");
+            const parsed = raw ? Date.parse(String(raw).includes("T") ? String(raw) : String(raw).replace(" ", "T")) : NaN;
+            const key = Number.isNaN(parsed)
+                ? "Sin fecha"
+                : new Date(parsed).toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric" });
+            const list = groups.get(key) || [];
+            list.push(broadcast);
+            groups.set(key, list);
+        });
+        return Array.from(groups.entries());
+    }, [processedBroadcasts]);
 
     const getStatusBadge = (status: string) => {
         switch (status) {
@@ -346,6 +390,27 @@ export default function BroadcastsListPage() {
         }
     };
 
+    const handleRetryFailed = async (broadcast: Broadcast) => {
+        if (!currentUser?.uid) return;
+        setActiveRowMenuId(null);
+        toast.loading("Reintentando envíos fallidos...", { id: `retry-${broadcast.id}` });
+        try {
+            const result = await launchBroadcast(currentUser.uid, entityId, broadcast.id, {
+                retryFailed: true,
+            });
+            if (result.ok) {
+                toast.success(
+                    `Reintento: ${result.summary?.sent || 0} enviados, ${result.summary?.failed || 0} fallidos.`,
+                    { id: `retry-${broadcast.id}` }
+                );
+            } else {
+                toast.error(result.error || "No se pudo reintentar.", { id: `retry-${broadcast.id}` });
+            }
+        } catch (e: any) {
+            toast.error(e.message, { id: `retry-${broadcast.id}` });
+        }
+    };
+
     const handleViewResults = (broadcast: Broadcast) => {
         setActiveRowMenuId(null);
         setResultsBroadcast(broadcast);
@@ -366,65 +431,62 @@ export default function BroadcastsListPage() {
     };
 
     return (
-        <div className="flex h-screen w-screen bg-[#07080a] text-white font-outfit font-normal antialiased tracking-tight overflow-hidden">
-            {/* Side Navigation Menu */}
-            <SidebarFilters
-                isSidebarOpen={isSidebarOpen}
-                setIsSidebarOpen={setIsSidebarOpen}
-            />
-
+        <div className="flex h-screen w-full max-w-full bg-[#07080a] text-white font-outfit font-normal antialiased tracking-tight overflow-hidden">
             {/* Main Content Area */}
-            <main className="flex-1 flex flex-col p-4 overflow-hidden relative">
+            <main className="flex-1 flex flex-col p-6 overflow-hidden relative">
+                {/* Page Title Header */}
+                <div className="mb-4 shrink-0">
+                    <h1 className="text-2xl sm:text-3xl font-normal text-white tracking-tight">
+                        Difusiones
+                    </h1>
+                </div>
+
                 {/* Header Actions */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 shrink-0">
                     <div className="relative flex-1 max-w-md">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500" />
                         <Input
                             type="text"
-                            placeholder="Search broadcasts..."
+                            placeholder="Buscar campañas..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="bg-[#13151a] border-white/5 pl-9 text-xs py-2 focus:ring-1 focus:ring-blue-500"
+                            className="bg-white/[0.03] border-white/10 pl-9 text-xs py-2 focus:ring-1 focus:ring-violet-500 rounded-xl"
                         />
                     </div>
 
                     <div className="flex items-center gap-2">
-                        <div className="flex items-center bg-[#13151a] p-1 rounded-lg border border-white/5">
+                        <div className="flex items-center p-1 rounded-xl bg-white/[0.03] border border-white/5">
                             <button
                                 onClick={() => setViewMode("Table")}
-                                className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-normal transition-all ${
+                                className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-normal transition-all ${
                                     viewMode === "Table"
-                                        ? "bg-white/5 text-violet-300"
+                                        ? "bg-white/10 text-violet-300 font-medium"
                                         : "text-neutral-400 hover:text-white"
                                 }`}
                             >
                                 <TableIcon className="w-3.5 h-3.5" />
-                                <span>Table</span>
+                                <span>Tabla</span>
                             </button>
                             <button
                                 onClick={() => setViewMode("Calendar")}
-                                className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-normal transition-all ${
+                                className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-normal transition-all ${
                                     viewMode === "Calendar"
-                                        ? "bg-white/5 text-violet-300"
+                                        ? "bg-white/10 text-violet-300 font-medium"
                                         : "text-neutral-400 hover:text-white"
                                 }`}
                             >
                                 <CalendarIcon className="w-3.5 h-3.5" />
-                                <span>Calendar</span>
+                                <span>Calendario</span>
                             </button>
                         </div>
 
                         <Button 
                             onClick={handleOpenAddSidebar}
-                            className="bg-violet-600/80 hover:bg-violet-600/90 text-white font-normal text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5 active:scale-95 transition-all"
+                            className="bg-violet-600 hover:bg-violet-500 text-white font-normal text-xs px-3.5 py-2 rounded-xl flex items-center gap-1.5 active:scale-95 transition-all shadow-md shadow-violet-600/20"
                         >
                             <Plus className="w-3.5 h-3.5" />
-                            <span>Add Broadcast</span>
+                            <span>Crear Difusión</span>
                         </Button>
-
-                        <button className="p-2 border border-white/5 bg-[#13151a] text-neutral-400 hover:text-white rounded-lg hover:bg-white/5 transition-all">
-                            <MoreHorizontal className="w-3.5 h-3.5" />
-                        </button>
                     </div>
                 </div>
 
@@ -485,16 +547,34 @@ export default function BroadcastsListPage() {
                             rowMenuRef={rowMenuRef}
                             handleClone={handleClone}
                             handleDeleteClick={handleDeleteClick}
-                            onLaunch={handleRequestLaunch}
-                            onResume={handleResumeBroadcast}
-                            onViewResults={handleViewResults}
+                    onLaunch={handleRequestLaunch}
+                    onResume={handleResumeBroadcast}
+                    onRetryFailed={handleRetryFailed}
+                    onViewResults={handleViewResults}
                             handleRename={handleRename}
                         />
                     ) : (
-                        <div className="flex flex-col items-center justify-center py-20 text-center text-neutral-500 border border-white/5 rounded-xl bg-[#0b0c10]/40">
-                            <CalendarIcon className="w-10 h-10 mb-3 text-neutral-600" />
-                            <p className="text-sm font-normal text-neutral-400">Calendar View is not active</p>
-                            <p className="text-xs text-neutral-600 mt-1">Switch to Table view to manage campaigns.</p>
+                        <div className="space-y-3">
+                            {calendarGroups.length === 0 ? (
+                                <div className="py-16 text-center text-xs text-neutral-500 border border-white/5 rounded-xl bg-[#0b0c10]/40">
+                                    No hay campañas para estas fechas.
+                                </div>
+                            ) : calendarGroups.map(([day, items]) => (
+                                <div key={day} className="rounded-xl border border-white/5 bg-[#0b0c10]/40">
+                                    <p className="px-4 py-2 text-[10px] uppercase tracking-wider text-neutral-500 border-b border-white/5">{day}</p>
+                                    {items.map((broadcast) => (
+                                        <button
+                                            key={broadcast.id}
+                                            type="button"
+                                            onClick={() => handleViewBroadcast(broadcast)}
+                                            className="w-full px-4 py-3 flex items-center justify-between gap-3 text-left text-xs border-t border-white/5 first:border-t-0 hover:bg-white/[0.03]"
+                                        >
+                                            <span className="text-white">{broadcast.name}</span>
+                                            <span className="text-neutral-500">{broadcast.status} · {broadcast.stats?.total ?? broadcast.recipients ?? 0}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            ))}
                         </div>
                     )}
                 </div>
@@ -546,6 +626,7 @@ export default function BroadcastsListPage() {
                     recipientsLoading={resultsRecipientsLoading}
                     tenantPath={tenantPath}
                     onClose={() => setResultsBroadcast(null)}
+                    onRetryFailed={() => handleRetryFailed(resultsBroadcast)}
                 />
             )}
         </div>

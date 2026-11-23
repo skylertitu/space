@@ -6,7 +6,7 @@ export default function CTORedirect() {
     const router = useRouter();
     const params = useParams();
     useEffect(() => {
-        router.replace(`/home/${params.entityId}/workspace?role=cto`);
+        router.replace(`/home/${params.entityId}`);
     }, [router, params.entityId]);
     return null;
 }

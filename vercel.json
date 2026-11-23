@@ -1,5 +1,6 @@
 {
   "crons": [
-    { "path": "/api/subscriptions/renew", "schedule": "0 14 * * *" }
+    { "path": "/api/subscriptions/renew", "schedule": "0 14 * * *" },
+    { "path": "/api/whatsapp/broadcast/dispatch-due", "schedule": "0 * * * *" }
   ]
 }

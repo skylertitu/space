@@ -29,6 +29,7 @@ interface CampaignResultsProps {
     recipientsLoading?: boolean;
     tenantPath: string;
     onClose: () => void;
+    onRetryFailed?: () => void;
 }
 
 const STATUS_LABELS: Record<RecipientStatus, string> = {
@@ -71,6 +72,7 @@ export default function CampaignResults({
     recipientsLoading,
     tenantPath,
     onClose,
+    onRetryFailed,
 }: CampaignResultsProps) {
     const [search, setSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState<RecipientStatus | "all">("all");
@@ -535,6 +537,15 @@ export default function CampaignResults({
                                                 <div className="rounded-lg border border-red-500/20 bg-red-500/[0.06] px-3 py-2">
                                                     <p className="text-[9px] text-red-400/80 uppercase">Fallidos</p>
                                                     <p className="text-lg text-red-300 tabular-nums mt-0.5">{stats.failed}</p>
+                                                    {onRetryFailed && broadcast.status === "Completed" && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={onRetryFailed}
+                                                            className="mt-2 text-[10px] text-red-200 underline underline-offset-2"
+                                                        >
+                                                            Reintentar fallidos
+                                                        </button>
+                                                    )}
                                                 </div>
                                             )}
                                             {stats.pending > 0 && (

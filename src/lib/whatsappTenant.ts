@@ -102,15 +102,25 @@ export async function resolveWhatsAppTenant(
     urlUserId?: string | null,
     urlEntityId?: string | null
 ): Promise<WhatsAppTenantContext | null> {
-    if (urlUserId && urlEntityId) {
-        return { userId: urlUserId, entityId: urlEntityId };
+    if (!recipientPhoneNumberId) {
+        if (urlUserId && urlEntityId) return { userId: urlUserId, entityId: urlEntityId };
+        return null;
     }
 
-    if (!recipientPhoneNumberId) return null;
-
-    // Reclamo verificado por el servidor (ver integrationClaims.ts): manda sobre cualquier campo escrito por clientes.
+    // El número manda. La URL (?u=&e=) no puede desviar un mensaje a otra entidad.
     const claimed = await getClaim('whatsapp', recipientPhoneNumberId);
-    if (claimed) return claimed;
+    if (claimed) {
+        if (
+            urlUserId &&
+            urlEntityId &&
+            (urlUserId !== claimed.userId || urlEntityId !== claimed.entityId)
+        ) {
+            console.warn(
+                `[WhatsApp Tenant] URL ${urlUserId}/${urlEntityId} no coincide con el reclamo de ${recipientPhoneNumberId}; se usa el reclamo.`
+            );
+        }
+        return claimed;
+    }
     if (claimsRequired()) {
         console.warn(`[WhatsApp Tenant] ${recipientPhoneNumberId} sin reclamo verificado (INTEGRATION_CLAIMS_MODE=require)`);
         return null;

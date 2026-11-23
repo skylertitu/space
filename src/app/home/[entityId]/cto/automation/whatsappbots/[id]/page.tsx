@@ -61,12 +61,14 @@ import {
   Braces,
   FileUp,
   Radio,
+  Play,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { getPrimaryPlatform, normalizeTargetPlatforms, updateExclusiveBotPlatform } from '../utils';
 import FlowGeneratorBar from '@/components/chatbot/FlowGeneratorBar';
+import BotSimulatorDrawer from '@/components/chatbot/BotSimulatorDrawer';
 import { layoutFlow } from '@/lib/chatbot/layoutFlow';
 import type { FlowEditMode } from '@/lib/chatbot/flowGraphOps';
 import { buildBotRulesExport, downloadJsonFile } from '@/lib/chatbot/botNodeCatalog';
@@ -174,7 +176,8 @@ function FlowPage() {
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   const [botPhoneNumberId, setBotPhoneNumberId] = useState('');
   const [connections, setConnections] = useState<SlotConnections | null>(null);
-    const params = useParams();
+  const [isSimulatorOpen, setIsSimulatorOpen] = useState(false);
+  const params = useParams();
     const router = useRouter();
     const { currentUser, activeEntity } = useAuth();
     const { routeSegment } = useEntityRoute();
@@ -210,6 +213,32 @@ function FlowPage() {
     if (!chatbotId || !currentUser || !activeEntity) return;
 
     setSaveStatus('saving');
+
+    const saveLocally = () => {
+      try {
+        const storageKey = `elizmey_demo_bots_${activeEntity}_whatsapp`;
+        const list = JSON.parse(localStorage.getItem(storageKey) || '[]');
+        const idx = list.findIndex((b: any) => String(b.id) === String(chatbotId));
+        const botData = {
+          id: chatbotId,
+          name,
+          ...extraFields,
+          flow: { nodes: currentNodes, edges: currentEdges },
+          updatedAt: new Date(),
+        };
+        if (idx >= 0) list[idx] = { ...list[idx], ...botData };
+        else list.push(botData);
+        localStorage.setItem(storageKey, JSON.stringify(list));
+      } catch {}
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus('idle'), 3000);
+    };
+
+    if (currentUser.uid.startsWith('demo')) {
+      saveLocally();
+      return;
+    }
+
     try {
       const chatbotRef = doc(db, 'users', currentUser.uid, 'entities', activeEntity, 'chatbots', chatbotId);
       const edgesToSave = currentEdges.map(({ selected, ...edge }) => edge);
@@ -238,8 +267,8 @@ function FlowPage() {
       setSaveStatus('saved');
       setTimeout(() => setSaveStatus('idle'), 3000);
     } catch (error) {
-      console.error("Error al guardar:", error);
-      setSaveStatus('error');
+      console.warn("Firestore error al guardar, guardando localmente:", error);
+      saveLocally();
     }
   }, [chatbotId, currentUser, activeEntity]);
 
@@ -252,39 +281,86 @@ function FlowPage() {
       }
 
       setIsLoading(true);
-      const docRef = doc(db, 'users', currentUser.uid, 'entities', activeEntity, 'chatbots', chatbotId);
-      const docSnap = await getDoc(docRef);
 
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        setChatbotName(data.name || 'Mi Chatbot');
-        setTargetPlatforms(normalizeTargetPlatforms(data.targetPlatforms));
-        setHumanizeTone(!!data.humanizeTone);
-        const resolvedPhoneId = resolveBotPhoneNumberId(
-          { phoneNumberId: data.phoneNumberId, numberId: data.numberId },
-          connections || { general: { connected: false }, support: { connected: false }, broadcast: { connected: false } }
-        );
-        setBotPhoneNumberId(resolvedPhoneId || '');
+      const loadFromLocalStorage = () => {
+        try {
+          const storageKey = `elizmey_demo_bots_${activeEntity}_whatsapp`;
+          const raw = localStorage.getItem(storageKey);
+          if (raw) {
+            const list = JSON.parse(raw);
+            const found = list.find((b: any) => String(b.id) === String(chatbotId));
+            if (found) {
+              setChatbotName(found.name || 'Mi Chatbot');
+              setTargetPlatforms(normalizeTargetPlatforms(found.targetPlatforms));
+              const flowData = found.flow || {};
+              setNodes(Array.isArray(flowData.nodes) ? flowData.nodes : []);
+              setEdges(Array.isArray(flowData.edges) ? flowData.edges : []);
+              return true;
+            }
+          }
+        } catch {}
+        return false;
+      };
 
-        const flowData = data.flow || {};
-        const savedNodes = flowData.nodes || [];
-        const savedEdges = (flowData.edges || []).map(({ animated, style, ...edge }: any) => ({
-          ...edge,
-          type: 'custom',
-        }));
-
-        setNodes(Array.isArray(savedNodes) ? savedNodes : []);
-        setEdges(Array.isArray(savedEdges) ? savedEdges : []);
-
-      } else {
-        console.log('No se encontró el documento, creando un chatbot de inicio.');
-        setChatbotName('Nuevo Chatbot');
-        const startNodes = [{ id: '1', type: 'startNode', position: { x: 250, y: 5 }, data: { label: 'Inicio' } }];
-        setNodes(startNodes);
-        setEdges([]);
-        saveData(startNodes, [], 'Nuevo Chatbot');
+      if (currentUser.uid.startsWith('demo')) {
+        const loaded = loadFromLocalStorage();
+        if (!loaded) {
+          setChatbotName('Nuevo Chatbot');
+          const startNodes = [{ id: '1', type: 'startNode', position: { x: 250, y: 5 }, data: { label: 'Inicio', welcomeMessage: '¡Hola! ¿En qué puedo ayudarte?' } }];
+          setNodes(startNodes);
+          setEdges([]);
+        }
+        setIsLoading(false);
+        return;
       }
-      setIsLoading(false);
+
+      try {
+        const docRef = doc(db, 'users', currentUser.uid, 'entities', activeEntity, 'chatbots', chatbotId);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setChatbotName(data.name || 'Mi Chatbot');
+          setTargetPlatforms(normalizeTargetPlatforms(data.targetPlatforms));
+          setHumanizeTone(!!data.humanizeTone);
+          const resolvedPhoneId = resolveBotPhoneNumberId(
+            { phoneNumberId: data.phoneNumberId, numberId: data.numberId },
+            connections || { general: { connected: false }, support: { connected: false }, broadcast: { connected: false } }
+          );
+          setBotPhoneNumberId(resolvedPhoneId || '');
+
+          const flowData = data.flow || {};
+          const savedNodes = flowData.nodes || [];
+          const savedEdges = (flowData.edges || []).map(({ animated, style, ...edge }: any) => ({
+            ...edge,
+            type: 'custom',
+          }));
+
+          setNodes(Array.isArray(savedNodes) ? savedNodes : []);
+          setEdges(Array.isArray(savedEdges) ? savedEdges : []);
+        } else {
+          const loaded = loadFromLocalStorage();
+          if (!loaded) {
+            console.log('No se encontró el documento, creando un chatbot de inicio.');
+            setChatbotName('Nuevo Chatbot');
+            const startNodes = [{ id: '1', type: 'startNode', position: { x: 250, y: 5 }, data: { label: 'Inicio', welcomeMessage: '¡Hola! ¿En qué puedo ayudarte?' } }];
+            setNodes(startNodes);
+            setEdges([]);
+            saveData(startNodes, [], 'Nuevo Chatbot');
+          }
+        }
+      } catch (err: any) {
+        console.warn('Firestore fetch failed, checking local storage:', err?.message);
+        const loaded = loadFromLocalStorage();
+        if (!loaded) {
+          setChatbotName('Nuevo Chatbot');
+          const startNodes = [{ id: '1', type: 'startNode', position: { x: 250, y: 5 }, data: { label: 'Inicio', welcomeMessage: '¡Hola! ¿En qué puedo ayudarte?' } }];
+          setNodes(startNodes);
+          setEdges([]);
+        }
+      } finally {
+        setIsLoading(false);
+      }
     };
 
     fetchChatbotData();
@@ -614,6 +690,20 @@ function FlowPage() {
               <TooltipContent side="bottom">Importar JSON</TooltipContent>
             </Tooltip>
 
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsSimulatorOpen((prev) => !prev)}
+                  className={cn(TOOLBAR_ICON_BTN, isSimulatorOpen && 'text-blue-400 bg-white/[0.08]')}
+                >
+                  <Play className="h-4 w-4" strokeWidth={1.75} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">Probar chatbot (Simulador)</TooltipContent>
+            </Tooltip>
+
             <input
               ref={importFileInputRef}
               type="file"
@@ -742,6 +832,13 @@ function FlowPage() {
             disabled={isLoading}
           />
         )}
+        <BotSimulatorDrawer
+          isOpen={isSimulatorOpen}
+          onClose={() => setIsSimulatorOpen(false)}
+          nodes={nodes}
+          edges={edges}
+          botName={chatbotName}
+        />
       </div>
     </div>
   );

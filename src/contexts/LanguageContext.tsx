@@ -12,7 +12,7 @@ interface LanguageContextProps {
 
 const translations: Record<Language, Record<string, string>> = {
   en: {
-    'nav.infrastructure': 'Infrastructure',
+    'nav.infrastructure': 'Infrastructure',    
     'nav.product': 'Product',
     'nav.build': 'Build',
     'nav.features': 'Features',

@@ -55,9 +55,9 @@ export async function POST(req: Request) {
 
     } catch (error: any) {
         console.error(`[Validation CRASH] ${error.stack || error.message}`);
-        return NextResponse.json({ 
-            valid: false, 
-            message: `Error de servidor: ${error.message}` 
+        return NextResponse.json({
+            valid: true,
+            warning: 'No se pudo comprobar si el número está en otra cuenta. Puedes guardarlo igualmente.',
         }, { status: 200 });
     }
 }

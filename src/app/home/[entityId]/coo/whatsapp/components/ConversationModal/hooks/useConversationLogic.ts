@@ -49,7 +49,7 @@ export const useConversationLogic = (props: ConversationModalProps) => {
 
             setActivePlatform(targetPlatform);
         }
-    }, [liveCardData?.id]);
+    }, [liveCardData?.id, liveCardData?.channel, liveCardData?.source, liveCardData?.primary_channel]);
 
     const currentPlatform = useMemo(() =>
         socialPlatforms.find(p => p.name === activePlatform) || socialPlatforms[0],

@@ -38,6 +38,7 @@ interface BroadcastsTableProps {
     handleDeleteClick: (broadcast: Broadcast) => void;
     onLaunch: (broadcast: Broadcast) => void;
     onResume: (broadcast: Broadcast) => void;
+    onRetryFailed: (broadcast: Broadcast) => void;
     onViewResults: (broadcast: Broadcast) => void;
     handleRename: (broadcast: Broadcast, name: string) => void;
 }
@@ -61,6 +62,7 @@ export default function BroadcastsTable({
     handleDeleteClick,
     onLaunch,
     onResume,
+    onRetryFailed,
     onViewResults,
     handleRename,
 }: BroadcastsTableProps) {
@@ -217,6 +219,7 @@ export default function BroadcastsTable({
                             const canViewResults = HAS_RESULTS.includes(broadcast.status);
                             const canEdit = EDITABLE.includes(broadcast.status);
                             const isSending = broadcast.status === "Sending";
+                            const canRetryFailed = broadcast.status === "Completed" && (stats?.failed ?? 0) > 0;
 
                             // Advanced Performance Metrics
                             const deliveryRate = stats && stats.sent > 0 ? Math.round((stats.delivered / stats.sent) * 100) : 0;
@@ -338,6 +341,17 @@ export default function BroadcastsTable({
                                                     <Play className="w-3 h-3" /> Reanudar
                                                 </button>
                                             )}
+                                            {canRetryFailed && (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        onRetryFailed(broadcast);
+                                                    }}
+                                                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-red-600/15 hover:bg-red-600/25 text-red-100 text-[10px] font-normal border border-red-500/20 active:scale-95 transition-all"
+                                                >
+                                                    Reintentar
+                                                </button>
+                                            )}
                                             {canViewResults && (
                                                 <button
                                                     onClick={(e) => {
@@ -380,6 +394,14 @@ export default function BroadcastsTable({
                                                         className="w-full px-3 py-1.5 text-xs text-amber-300 hover:text-amber-200 hover:bg-amber-500/10 transition-colors flex items-center gap-2"
                                                     >
                                                         <Play className="w-3 h-3" /> Reanudar envío
+                                                    </button>
+                                                )}
+                                                {canRetryFailed && (
+                                                    <button
+                                                        onClick={() => onRetryFailed(broadcast)}
+                                                        className="w-full px-3 py-1.5 text-xs text-red-300 hover:text-red-200 hover:bg-red-500/10 transition-colors flex items-center gap-2"
+                                                    >
+                                                        Reintentar fallidos
                                                     </button>
                                                 )}
                                                 {canViewResults && (

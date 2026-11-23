@@ -1,7 +1,7 @@
 import type { Firestore } from "firebase-admin/firestore";
 import { admin } from "@/lib/firebase-admin";
 import { registerWhatsAppTenantMapping } from "@/lib/whatsappTenant";
-import { finalizeBroadcastIfDone } from "./finalizeBroadcastSend";
+import { broadcastSendLooksStale, finalizeBroadcastIfDone } from "./finalizeBroadcastSend";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -32,6 +32,8 @@ export interface RunBroadcastSendParams {
     entityId: string;
     broadcastId: string;
     resume?: boolean;
+    /** Reenvía solo los destinatarios que fallaron, también si la campaña ya figura completada. */
+    retryFailed?: boolean;
 }
 
 export interface RunBroadcastSendResult {
@@ -47,28 +49,40 @@ export interface RunBroadcastSendResult {
 export async function runBroadcastSendLoop(
     params: RunBroadcastSendParams
 ): Promise<RunBroadcastSendResult> {
-    const { db, userId, entityId, broadcastId, resume = false } = params;
+    const { db, userId, entityId, broadcastId, resume = false, retryFailed = false } = params;
     const tenantPath = `users/${userId}/entities/${entityId}`;
     const broadcastRef = db.doc(`${tenantPath}/broadcasts/${broadcastId}`);
+    const recipientsCol = db.collection(`${tenantPath}/broadcasts/${broadcastId}/recipients`);
 
-    const snap = await broadcastRef.get();
-    if (!snap.exists) {
-        return { success: false, status: "unknown", sent: 0, failed: 0, total: 0, error: "not_found" };
+    if (retryFailed) {
+        const failedProbe = await recipientsCol.where("status", "==", "failed").limit(1).get();
+        if (failedProbe.empty) {
+            return { success: false, status: "Completed", sent: 0, failed: 0, total: 0, error: "no_failed" };
+        }
     }
 
-    let broadcast: Record<string, unknown> = snap.data() || {};
-    const status = String(broadcast.status || "");
+    const claimed = await db.runTransaction(async (tx) => {
+        const fresh = await tx.get(broadcastRef);
+        if (!fresh.exists) return { error: "not_found" as const };
+        const data = (fresh.data() || {}) as Record<string, unknown>;
+        const current = String(data.status || "");
+        const stale = broadcastSendLooksStale(data);
+        if (current === "Completed" && !retryFailed) return { error: "already_completed" as const };
+        if (current === "Sending" && !resume && !retryFailed && !stale) return { error: "already_sending" as const };
+        tx.update(broadcastRef, {
+            status: "Sending",
+            launchedAt: admin.firestore.FieldValue.serverTimestamp(),
+            sendHeartbeatAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+        return { broadcast: data, stale };
+    });
 
-    const { broadcastSendLooksStale } = await import("./finalizeBroadcastSend");
-    const stale = broadcastSendLooksStale(broadcast);
-
-    if (status === "Completed") {
-        return { success: false, status, sent: 0, failed: 0, total: 0, error: "already_completed" };
+    if ("error" in claimed) {
+        return { success: false, status: "unknown", sent: 0, failed: 0, total: 0, error: claimed.error };
     }
 
-    if (status === "Sending" && !resume && !stale) {
-        return { success: false, status, sent: 0, failed: 0, total: 0, error: "already_sending" };
-    }
+    let broadcast: Record<string, unknown> = claimed.broadcast;
+    const stale = claimed.stale;
 
     let message = (broadcast.message || { kind: "text", text: "" }) as Record<string, unknown>;
 
@@ -86,21 +100,7 @@ export async function runBroadcastSendLoop(
         broadcast = { ...broadcast, message };
     }
 
-    if (status !== "Sending") {
-        await broadcastRef.update({
-            status: "Sending",
-            launchedAt: admin.firestore.FieldValue.serverTimestamp(),
-            sendHeartbeatAt: admin.firestore.FieldValue.serverTimestamp(),
-        });
-    } else {
-        await broadcastRef.update({
-            sendHeartbeatAt: admin.firestore.FieldValue.serverTimestamp(),
-        });
-    }
-
-    const recSnap = await db
-        .collection(`${tenantPath}/broadcasts/${broadcastId}/recipients`)
-        .get();
+    const recSnap = await recipientsCol.get();
 
     type RecipientRow = Record<string, unknown> & {
         id: string;
@@ -109,7 +109,7 @@ export async function runBroadcastSendLoop(
 
     const recipients: RecipientRow[] = recSnap.docs
         .map((d): RecipientRow => ({ id: d.id, ref: d.ref, ...(d.data() as Record<string, unknown>) }))
-        .filter((r) => r.status === "pending" || r.status === "failed");
+        .filter((r) => (retryFailed ? r.status === "failed" : r.status === "pending" || r.status === "failed"));
 
     const { sendWhatsAppMessage } = await import("@/lib/sendProviders");
 
@@ -335,7 +335,7 @@ export async function runBroadcastSendLoop(
             sent: done.stats.sent,
             failed: done.stats.failed,
             total: done.stats.total,
-            resumed: resume || stale,
+            resumed: resume || retryFailed || stale,
             error: aborted && !done.finalized ? "interrupted" : undefined,
         };
     }

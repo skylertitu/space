@@ -12,30 +12,7 @@ const DEFAULT_DEMO_GROUPS = [
     { id: 'leads', title: 'Clientes Interesados', color: 'emerald', order: 2 },
 ];
 
-const DEFAULT_DEMO_CARDS = [
-    {
-        id: 'conv_1',
-        name: 'Carlos Mendoza',
-        phone: '+52 55 1234 5678',
-        phoneNumber: '+52 55 1234 5678',
-        channel: 'whatsapp',
-        lastMessage: 'Hola, me gustaría información sobre los paquetes de mensajería.',
-        updatedAt: new Date(),
-        groupId: 'inbox',
-        unreadCount: 1,
-    },
-    {
-        id: 'conv_2',
-        name: 'Mariana Gómez',
-        phone: '+57 300 987 6543',
-        phoneNumber: '+57 300 987 6543',
-        channel: 'instagram',
-        lastMessage: 'El bot me atendió excelente, muchas gracias.',
-        updatedAt: new Date(),
-        groupId: 'bot',
-        unreadCount: 0,
-    }
-];
+const DEFAULT_DEMO_CARDS: any[] = [];
 
 export const useKanbanBoard = (filterTerm: string = '') => {
     const { currentUser, activeEntity } = useAuth();

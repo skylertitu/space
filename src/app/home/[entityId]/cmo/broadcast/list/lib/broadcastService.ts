@@ -161,7 +161,7 @@ export const subscribeBroadcasts = (
             cb(list);
         },
         (err) => {
-            console.error("[Broadcast] subscribe error:", err);
+            console.warn("[Broadcast] subscribe warning (offline/fallback):", err);
             cb([]);
         }
     );
@@ -178,7 +178,7 @@ export const subscribeRecipients = (
         ref,
         (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...d.data() } as BroadcastRecipient))),
         (err) => {
-            console.error("[Broadcast] subscribeRecipients error:", err);
+            console.warn("[Broadcast] subscribeRecipients warning (offline/fallback):", err);
             cb([]);
         }
     );
@@ -211,13 +211,19 @@ export const launchBroadcast = async (
     userId: string,
     entityId: string,
     broadcastId: string,
-    options?: { resume?: boolean }
+    options?: { resume?: boolean; retryFailed?: boolean }
 ): Promise<{ ok: boolean; error?: string; summary?: any }> => {
     try {
         const res = await fetch("/api/whatsapp/broadcast/send", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ userId, entityId, broadcastId, resume: options?.resume }),
+            body: JSON.stringify({
+                userId,
+                entityId,
+                broadcastId,
+                resume: options?.resume,
+                retryFailed: options?.retryFailed,
+            }),
         });
         const data = await res.json();
         if (!res.ok) return { ok: false, error: data.error || "Error al iniciar la campaña" };

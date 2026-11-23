@@ -25,6 +25,9 @@ export function WorkspaceUserMenu() {
 
     // Fetch user photo from users/{uid}
     const fetchUser = async () => {
+      if (currentUser?.photoURL) {
+        setUserPhoto(currentUser.photoURL);
+      }
       try {
         const userSnap = await getDoc(doc(db, `users/${currentUser.uid}`));
         if (userSnap.exists()) {
@@ -32,7 +35,7 @@ export function WorkspaceUserMenu() {
           if (d?.photoURL) setUserPhoto(d.photoURL);
         }
       } catch (err) {
-        console.error('Error fetching user data:', err);
+        console.warn('User photo fetch handled:', err);
       }
     };
 
@@ -41,6 +44,15 @@ export function WorkspaceUserMenu() {
 
   useEffect(() => {
     if (!currentUser || !activeEntity) return;
+
+    if (activeEntity === 'personal' || activeEntity === 'life') {
+      setEntityData({
+        name: 'Personal',
+        type: 'persona',
+        logoUrl: currentUser.photoURL || undefined,
+      });
+      return;
+    }
 
     const fetchEntity = async () => {
       try {
@@ -54,7 +66,7 @@ export function WorkspaceUserMenu() {
           });
         }
       } catch (err) {
-        console.error('Error fetching entity data in menu:', err);
+        console.warn('Entity data fetch handled:', err);
       }
     };
 

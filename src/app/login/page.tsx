@@ -6,6 +6,8 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   GoogleAuthProvider,
   GithubAuthProvider,
   FacebookAuthProvider,
@@ -18,8 +20,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-import { Phone, Mail, ArrowLeft, Zap } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
+import { Phone, Mail, ArrowLeft } from 'lucide-react';
 
 // ... (keep BlueParticles unchanged)
 interface Particle {
@@ -93,6 +94,34 @@ const BlueParticles = () => {
   return <canvas ref={canvasRef} className="fixed inset-0 z-[10] pointer-events-none" />;
 };
 
+function authErrorMessage(error: { code?: string; message?: string }): string {
+  switch (error?.code) {
+    case 'auth/popup-blocked':
+      return 'El navegador bloqueó la ventana de Google. Reintenta y permite ventanas emergentes, o usa el correo.';
+    case 'auth/popup-closed-by-user':
+    case 'auth/cancelled-popup-request':
+      return 'Cerraste la ventana antes de terminar el inicio de sesión.';
+    case 'auth/invalid-continue-uri':
+    case 'auth/unauthorized-domain':
+      return 'Google rechazó esta dirección. En Firebase Auth, Authorized domains tiene que incluir localhost.';
+    case 'auth/invalid-credential':
+    case 'auth/wrong-password':
+    case 'auth/user-not-found':
+    case 'auth/invalid-email':
+      return 'Correo o contraseña incorrectos.';
+    case 'auth/email-already-in-use':
+      return 'Ese correo ya tiene cuenta. Entra con él.';
+    case 'auth/weak-password':
+      return 'La contraseña debe tener al menos 6 caracteres.';
+    case 'auth/operation-not-allowed':
+      return 'Ese método de acceso no está activado en Firebase Auth.';
+    case 'auth/account-exists-with-different-credential':
+      return 'Ese correo ya entró con otro método. Usa el mismo proveedor de la primera vez.';
+    default:
+      return error?.message || 'No se pudo iniciar sesión.';
+  }
+}
+
 function LoginContent() {
   const searchParams = useSearchParams();
   const isRegisterParam = searchParams.get('register') === 'true';
@@ -106,13 +135,15 @@ function LoginContent() {
   const [showEmailForm, setShowEmailForm] = useState(false);
   const [isHoveringText, setIsHoveringText] = useState(false);
   const router = useRouter();
-  const { loginDemo } = useAuth();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         router.push('/home');
       }
+    });
+    getRedirectResult(auth).catch((error) => {
+      toast.error(authErrorMessage(error));
     });
     return () => unsubscribe();
   }, [router]);
@@ -133,7 +164,7 @@ function LoginContent() {
       }
       router.push('/home');
     } catch (error: any) {
-      toast.error('Error en autenticación: ' + error.message);
+      toast.error(authErrorMessage(error));
     } finally {
       setLoading(false);
     }
@@ -157,7 +188,17 @@ function LoginContent() {
       toast.success(`Iniciaste sesión con ${providerName}`);
       router.push('/home');
     } catch (error: any) {
-      toast.error(`Error con ${providerName}: ` + error.message);
+      const code = error?.code || '';
+      if (code === 'auth/popup-blocked') {
+        try {
+          await signInWithRedirect(auth, provider);
+          return;
+        } catch (redirectError: any) {
+          toast.error(authErrorMessage(redirectError));
+        }
+      } else {
+        toast.error(authErrorMessage(error));
+      }
     } finally {
       setLoading(false);
     }
@@ -273,24 +314,6 @@ function LoginContent() {
 
               {/* Single Column X/Twitter-style Capsule List */}
               <div className="w-full max-w-[340px] flex flex-col gap-3 mx-auto">
-                <Button
-                  type="button"
-                  onClick={() => {
-                    loginDemo();
-                    toast.success('Acceso directo concedido (sin Firebase)');
-                    router.push('/home');
-                  }}
-                  className="w-full h-11 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-medium text-sm transition-all shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2"
-                >
-                  <Zap className="w-4 h-4 text-yellow-300 fill-yellow-300" />
-                  <span>Acceso Directo (Sin Firebase)</span>
-                </Button>
-
-                <div className="flex items-center my-1">
-                  <div className="flex-1 border-t border-white/10" />
-                  <span className="px-3 text-[11px] text-white/40 uppercase tracking-widest">o con cuenta</span>
-                  <div className="flex-1 border-t border-white/10" />
-                </div>
                 {showEmailForm ? (
                   <motion.form
                     initial={{ opacity: 0, scale: 0.95 }}

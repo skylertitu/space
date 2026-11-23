@@ -90,8 +90,8 @@ export const useCardSubscription = ({ card, groups = [], groupName, tenantPath: 
                     }
                 }
                 console.warn(`[useCardSubscription] ❌ Card ${cardIdToFind} not found in any group.`);
-            } catch (err) {
-                console.error("[useCardSubscription] Dynamic search failed:", err);
+            } catch (err: any) {
+                console.warn("[useCardSubscription] Dynamic search offline/error:", err?.message);
             }
         };
 
@@ -178,57 +178,63 @@ export const useCardSubscription = ({ card, groups = [], groupName, tenantPath: 
 
         const initCRM = async () => {
             if (!tenantPath) return;
-            const phone = card?.contactNumber || (card as any)?.phone;
-            const metaSenderId = (card as any)?.metaSenderId || liveCardData?.metaSenderId || (card as any)?.contactNumber;
-            const crmIdFromCard = (card as any)?.crmId || (card as any)?.contactId;
-            
-            let targetId = (card?.id && !card.id.startsWith('temp-') && crmIdFromCard) || null;
+            try {
+                const phone = card?.contactNumber || (card as any)?.phone;
+                const metaSenderId = (card as any)?.metaSenderId || liveCardData?.metaSenderId || (card as any)?.contactNumber;
+                const crmIdFromCard = (card as any)?.crmId || (card as any)?.contactId;
+                
+                let targetId = (card?.id && !card.id.startsWith('temp-') && crmIdFromCard) || null;
 
-            // 1. Try search by Phone
-            if (!targetId && phone && phone.length > 5) {
-                const digits = phone.replace(/\D/g, '');
-                const crmQuery = query(collection(db, `${tenantPath}/contacts`), where('phone', 'in', [`+${digits}`, digits]));
-                const snap = await getDocs(crmQuery);
-                if (!snap.empty) targetId = snap.docs[0].id;
-            }
+                // 1. Try search by Phone
+                if (!targetId && phone && phone.length > 5) {
+                    const digits = phone.replace(/\D/g, '');
+                    const crmQuery = query(collection(db, `${tenantPath}/contacts`), where('phone', 'in', [`+${digits}`, digits]));
+                    const snap = await getDocs(crmQuery);
+                    if (!snap.empty) targetId = snap.docs[0].id;
+                }
 
-            // 2. Try search by metaSenderId (Critical for Messenger/Instagram)
-            if (!targetId && metaSenderId) {
-                const metaQuery = query(collection(db, `${tenantPath}/contacts`), where('metaSenderId', '==', metaSenderId));
-                const snap = await getDocs(metaQuery);
-                if (!snap.empty) targetId = snap.docs[0].id;
-            }
+                // 2. Try search by metaSenderId (Critical for Messenger/Instagram)
+                if (!targetId && metaSenderId) {
+                    const metaQuery = query(collection(db, `${tenantPath}/contacts`), where('metaSenderId', '==', metaSenderId));
+                    const snap = await getDocs(metaQuery);
+                    if (!snap.empty) targetId = snap.docs[0].id;
+                }
 
-            // 3. Try search by crmId field
-            if (!targetId && crmIdFromCard) {
-                const idQuery = query(collection(db, `${tenantPath}/contacts`), where('crmId', '==', crmIdFromCard));
-                const snap = await getDocs(idQuery);
-                if (!snap.empty) targetId = snap.docs[0].id;
-            }
+                // 3. Try search by crmId field
+                if (!targetId && crmIdFromCard) {
+                    const idQuery = query(collection(db, `${tenantPath}/contacts`), where('crmId', '==', crmIdFromCard));
+                    const snap = await getDocs(idQuery);
+                    if (!snap.empty) targetId = snap.docs[0].id;
+                }
 
-            if (targetId && isMounted) {
-                const unsub = onSnapshot(doc(db, `${tenantPath}/contacts`, targetId), (snap) => {
-                    if (!isMounted) return;
-                    if (snap.exists()) {
-                        const data = snap.data();
-                        setCrmData(data);
-                        
-                        setContactInfo(prev => {
-                            const resolvedName = data.name || 
-                                `${data.firstName || ''} ${data.lastName || ''}`.trim() || 
-                                prev.contactName || '';
+                if (targetId && isMounted) {
+                    const unsub = onSnapshot(doc(db, `${tenantPath}/contacts`, targetId), (snap) => {
+                        if (!isMounted) return;
+                        if (snap.exists()) {
+                            const data = snap.data();
+                            setCrmData(data);
+                            
+                            setContactInfo(prev => {
+                                const resolvedName = data.name || 
+                                    `${data.firstName || ''} ${data.lastName || ''}`.trim() || 
+                                    prev.contactName || '';
 
-                            return {
-                                ...prev,
-                                ...data,
-                                id: snap.id,
-                                contactName: resolvedName,
-                                contactNumber: data.phone || prev.contactNumber
-                            };
-                        });
-                    }
-                });
-                unsubscribeCRM = unsub;
+                                return {
+                                    ...prev,
+                                    ...data,
+                                    id: snap.id,
+                                    contactName: resolvedName,
+                                    contactNumber: data.phone || prev.contactNumber
+                                };
+                            });
+                        }
+                    }, (err) => {
+                        console.warn('[useCardSubscription] Contact subscription offline/error:', err?.message);
+                    });
+                    unsubscribeCRM = unsub;
+                }
+            } catch (err: any) {
+                console.warn('[useCardSubscription] CRM lookup offline/error:', err?.message);
             }
         };
 

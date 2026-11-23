@@ -19,6 +19,8 @@ function normalizePrivateKey(raw: string): string {
     }
     return privateKey;
 }
+let isCredentialed = false;
+
 if (!admin.apps.length) {
     try {
         const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
@@ -51,6 +53,7 @@ if (!admin.apps.length) {
                 });
                 console.log(`[Firebase Admin] 🏆 SUCCESS: Initialized from BASE64 ENV (Ultra-Safe Mode).`);
                 initialized = true;
+                isCredentialed = true;
             } catch (b64Err: any) {
                 console.error('[Firebase Admin] ❌ Error initializing from BASE64 ENV:', b64Err.message);
             }
@@ -62,7 +65,7 @@ if (!admin.apps.length) {
 
                 admin.initializeApp({
                     credential: admin.credential.cert({
-                        projectId: projectId || process.env.FIREBASE_PROJECT_ID || 'roosevelt-491004',
+                        projectId: projectId || process.env.FIREBASE_PROJECT_ID || 'elizmey-8dc59',
                         clientEmail: firebaseClientEmail.trim(),
                         privateKey,
                     }),
@@ -70,6 +73,7 @@ if (!admin.apps.length) {
                 });
                 console.log('[Firebase Admin] ✅ SUCCESS: Initialized from FIREBASE_CLIENT_EMAIL + FIREBASE_PRIVATE_KEY.');
                 initialized = true;
+                isCredentialed = true;
             } catch (splitKeyErr: any) {
                 console.error('[Firebase Admin] ❌ Error initializing from split ENV keys:', splitKeyErr.message);
             }
@@ -139,6 +143,7 @@ if (!admin.apps.length) {
                 
                 console.log(`[Firebase Admin] ✅ SUCCESS: Initialized from ENV.`);
                 initialized = true;
+                isCredentialed = true;
             } catch (jsonError: any) {
                 console.error('[Firebase Admin] ❌ Error initializing from ENV (Is the object malformed?):', jsonError.message);
                 // Do not throw here, fallback to next strategy
@@ -154,13 +159,14 @@ if (!admin.apps.length) {
                 });
                 console.log(`[Firebase Admin] ✅ SUCCESS: Initialized from file (${serviceAccountPath}).`);
                 initialized = true;
+                isCredentialed = true;
             } catch (fileErr: any) {
                 console.error('[Firebase Admin] ❌ Error loading from serviceAccountKey.json:', fileErr.message);
             }
         } 
         
         if (!initialized) {
-            const resolvedProject = projectId || process.env.FIREBASE_PROJECT_ID || 'roosevelt-491004';
+            const resolvedProject = projectId || process.env.FIREBASE_PROJECT_ID || 'elizmey-8dc59';
             console.error(
                 '[Firebase Admin] ❌ No service account credentials found. ' +
                     'Set FIREBASE_CLIENT_EMAIL + FIREBASE_PRIVATE_KEY in .env.local ' +
@@ -176,5 +182,6 @@ if (!admin.apps.length) {
 // Exportar instancias directas
 export const db = admin.firestore();
 export const auth = admin.auth();
+export const hasAdminCredentials = (): boolean => isCredentialed;
 export { admin };
 

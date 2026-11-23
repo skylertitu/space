@@ -6,6 +6,9 @@ import { collection, onSnapshot } from 'firebase/firestore';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEntityRoute } from '@/hooks/useEntityRoute';
 import { cn } from '@/lib/utils';
+import { getWhatsAppIntegrationHealth } from '@/lib/omnichannel/whatsappIntegrationStatus';
+import { getChannelSendHealth, type InboxChannel } from '@/lib/omnichannel/channelSendHealth';
+import { isAssignedToMe, isUnassignedChat } from '@/lib/omnichannel/humanTakeover';
 
 interface SidebarProps {
     selectedFolder: string;
@@ -36,7 +39,7 @@ function CollapsedTooltip({ label, children }: { label: string; children: React.
 export default function InboxSidebar({ selectedFolder, setSelectedFolder, cards = [] }: SidebarProps) {
     const { currentUser } = useAuth();
     const { firestoreId: activeEntity, routeSegment } = useEntityRoute();
-    const [integrationStatuses, setIntegrationStatuses] = useState<Record<string, string>>({});
+    const [integrationDocs, setIntegrationDocs] = useState<Record<string, any>>({});
     const [isCollapsed, setIsCollapsed] = useState(true);
 
     useEffect(() => {
@@ -63,12 +66,12 @@ export default function InboxSidebar({ selectedFolder, setSelectedFolder, cards 
         if (!currentUser || !activeEntity) return;
         const integrationsRef = collection(db, `users/${currentUser.uid}/entities/${activeEntity}/integrations`);
         const unsubscribe = onSnapshot(integrationsRef, (snapshot) => {
-            const statuses: Record<string, string> = {};
+            const docs: Record<string, any> = {};
             snapshot.docs.forEach(doc => {
                 if (doc.id === '_init') return;
-                statuses[doc.id] = doc.data().status;
+                docs[doc.id] = doc.data();
             });
-            setIntegrationStatuses(statuses);
+            setIntegrationDocs(docs);
         });
         return () => unsubscribe();
     }, [currentUser, activeEntity]);
@@ -87,8 +90,8 @@ export default function InboxSidebar({ selectedFolder, setSelectedFolder, cards 
 
     const counts = {
         all: cards.reduce((acc, c) => acc + (c.unreadCount || 0), 0),
-        mine: cards.filter(c => c.assignedTo === 'Mío').reduce((acc, c) => acc + (c.unreadCount || 0), 0),
-        unassigned: cards.filter(c => !c.assignedTo || c.assignedTo === 'Unassigned').reduce((acc, c) => acc + (c.unreadCount || 0), 0),
+        mine: cards.filter(c => isAssignedToMe(c, currentUser?.uid)).reduce((acc, c) => acc + (c.unreadCount || 0), 0),
+        unassigned: cards.filter(c => isUnassignedChat(c)).reduce((acc, c) => acc + (c.unreadCount || 0), 0),
     };
 
     const folders = [
@@ -118,8 +121,21 @@ export default function InboxSidebar({ selectedFolder, setSelectedFolder, cards 
         return <Hash size={14} className="opacity-40" />;
     };
 
+    const whatsappHealth = getWhatsAppIntegrationHealth(integrationDocs.whatsapp, integrationDocs.whatsapp_internal);
+
     const renderStatusDot = (channelId: string) => {
-        const status = integrationStatuses[channelId] || integrationStatuses[`${channelId}_internal`];
+        if (channelId === 'whatsapp') {
+            if (whatsappHealth.canSend) return <div className="absolute -right-0.5 -bottom-0.5 w-1.5 h-1.5 bg-blue-500 rounded-full border border-[#0a0a0a]" />;
+            if (whatsappHealth.level === 'partial') return <div className="absolute -right-0.5 -bottom-0.5 w-1.5 h-1.5 bg-amber-500 rounded-full border border-[#0a0a0a] animate-pulse" />;
+            return <div className="absolute -right-0.5 -bottom-0.5 w-1.5 h-1.5 bg-neutral-800 rounded-full border border-[#0a0a0a]" />;
+        }
+        const status = integrationDocs[channelId]?.status || integrationDocs[`${channelId}_internal`]?.status;
+        if (channelId === 'messenger' || channelId === 'instagram' || channelId === 'telegram') {
+            const health = getChannelSendHealth(channelId as InboxChannel, integrationDocs[channelId]);
+            if (health.canSend) return <div className="absolute -right-0.5 -bottom-0.5 w-1.5 h-1.5 bg-blue-500 rounded-full border border-[#0a0a0a]" />;
+            if (health.partial) return <div className="absolute -right-0.5 -bottom-0.5 w-1.5 h-1.5 bg-amber-500 rounded-full border border-[#0a0a0a] animate-pulse" />;
+            return <div className="absolute -right-0.5 -bottom-0.5 w-1.5 h-1.5 bg-neutral-800 rounded-full border border-[#0a0a0a]" />;
+        }
         if (status === 'Connected') return <div className="absolute -right-0.5 -bottom-0.5 w-1.5 h-1.5 bg-blue-500 rounded-full border border-[#0a0a0a]" />;
         if (status === 'Error') return <div className="absolute -right-0.5 -bottom-0.5 w-1.5 h-1.5 bg-amber-500 rounded-full border border-[#0a0a0a] animate-pulse" />;
         return <div className="absolute -right-0.5 -bottom-0.5 w-1.5 h-1.5 bg-neutral-800 rounded-full border border-[#0a0a0a]" />;
@@ -237,7 +253,11 @@ export default function InboxSidebar({ selectedFolder, setSelectedFolder, cards 
                     {(isCollapsed || expandedSections.inboxes) && (
                         <div className={cn('space-y-0.5', !isCollapsed && 'animate-in fade-in slide-in-from-top-1 duration-200')}>
                             {channels.map(channel => {
-                                const isError = integrationStatuses[channel.id] === 'Error';
+                                const isError = channel.id === 'whatsapp'
+                                    ? whatsappHealth.level === 'partial'
+                                    : (channel.id === 'messenger' || channel.id === 'instagram' || channel.id === 'telegram')
+                                        ? getChannelSendHealth(channel.id as InboxChannel, integrationDocs[channel.id]).partial
+                                        : integrationDocs[channel.id]?.status === 'Error';
                                 const btn = (
                                     <button
                                         onClick={() => setSelectedFolder(channel.id)}

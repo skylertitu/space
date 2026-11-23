@@ -27,6 +27,7 @@ export const Carousel = () => {
         omnichannel: 'coo',
         integrations: 'cto',
         whatsappbots: 'cto',
+        automation: 'cto',
         broadcast: 'cmo',
         crm: 'cmo',
         analytics: 'cmo',
@@ -38,7 +39,7 @@ export const Carousel = () => {
     const noPlan = !!entitlements && entitlements.enforced && !entitlements.free && !entitlements.active;
     const isLocked = (id: string) => {
         // En la plataforma de mensajería automática, las herramientas principales están disponibles para operar
-        if (['omnichannel', 'integrations', 'whatsappbots', 'broadcast', 'crm', 'analytics', 'configuracion'].includes(id)) {
+        if (['omnichannel', 'integrations', 'whatsappbots', 'automation', 'chatbots', 'broadcast', 'crm', 'audiencias', 'analytics', 'metricas', 'configuracion', 'ajustes'].includes(id)) {
             return false;
         }
         if (!entitlements || entitlements.free) return false;

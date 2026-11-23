@@ -29,9 +29,26 @@ export function preloadWhatsAppTemplateBodies(
     entityId: string
 ): Promise<void> {
     const key = `${userId}:${entityId}`;
+    const cacheStorageKey = `elizmey_wa_templates_${key}`;
+
     if (loadedForKey === key && bodyByName.size > 0) {
         return Promise.resolve();
     }
+
+    try {
+        if (typeof window !== "undefined") {
+            const stored = sessionStorage.getItem(cacheStorageKey);
+            if (stored) {
+                const parsed = JSON.parse(stored);
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                    bodyByName.clear();
+                    parsed.forEach(([k, v]: [string, string]) => bodyByName.set(k, v));
+                    loadedForKey = key;
+                }
+            }
+        }
+    } catch {}
+
     if (loadPromise && loadedForKey === key) return loadPromise;
 
     loadedForKey = key;
@@ -45,6 +62,11 @@ export function preloadWhatsAppTemplateBodies(
                 const body = t.components?.find((c) => c.type === "BODY")?.text;
                 if (body) bodyByName.set(t.name, body);
             });
+            try {
+                if (typeof window !== "undefined") {
+                    sessionStorage.setItem(cacheStorageKey, JSON.stringify(Array.from(bodyByName.entries())));
+                }
+            } catch {}
         })
         .catch(() => undefined)
         .finally(() => {

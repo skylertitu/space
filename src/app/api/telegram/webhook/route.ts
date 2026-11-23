@@ -3,6 +3,8 @@ import { db, admin } from '@/lib/firebase-admin';
 import { processChatbotFlow } from '@/lib/chatbotEngine';
 import { telegramSecretMatches } from '@/lib/webhookSignature';
 import { buildBotQueueItem, createQueuedBotState, isDuplicateQueueMessage } from '@/lib/botQueue';
+import { deliverInboundToOpenConversation } from '@/lib/conversations/channelInbound';
+import { createHash } from 'crypto';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -26,12 +28,30 @@ export async function POST(req: Request) {
         const text = isCallback ? body.callback_query.data : body.message.text;
         const messageId = String(isCallback ? `cb_${body.callback_query.id}` : (message_id || Date.now()));
 
-        if (!userId || !entityId) {
+        const headerSecret = req.headers.get('x-telegram-bot-api-secret-token') || '';
+        let resolvedUserId = userId;
+        let resolvedEntityId = entityId;
+        if (headerSecret) {
+            const secretHash = createHash('sha256').update(headerSecret).digest('hex');
+            const mapped = await db.doc(`system_mappings/telegram_secrets/items/${secretHash}`).get();
+            if (mapped.exists) {
+                const owner = mapped.data() || {};
+                if (owner.userId && owner.entityId) {
+                    if (userId && entityId && (userId !== owner.userId || entityId !== owner.entityId)) {
+                        console.warn('[Telegram] La URL no coincide con el bot. Se usa la cuenta dueña del secreto.');
+                    }
+                    resolvedUserId = String(owner.userId);
+                    resolvedEntityId = String(owner.entityId);
+                }
+            }
+        }
+
+        if (!resolvedUserId || !resolvedEntityId) {
             console.error('[Telegram] Webhook received without u/e context');
             return NextResponse.json({ ok: true });
         }
 
-        const entityPath = `users/${userId}/entities/${entityId}`;
+        const entityPath = `users/${resolvedUserId}/entities/${resolvedEntityId}`;
         
         // 1. Validate Integration (Isolated)
         const integrationRef = db.doc(`${entityPath}/integrations/telegram`);
@@ -124,6 +144,31 @@ export async function POST(req: Request) {
                 cardUpdate['botState.messageQueue'] = admin.firestore.FieldValue.arrayUnion(queueItem);
             }
 
+            const delivered = await deliverInboundToOpenConversation({
+                db,
+                tenantPath: entityPath,
+                cardId,
+                cardData: cardSnap.data(),
+                newMessage,
+                queueItem,
+                alreadyQueued,
+                displayText: text || '[Telegram]',
+                fields: {
+                    channel: 'telegram',
+                    primary_channel: 'telegram',
+                    source: 'TELEGRAM',
+                    telegramChatId: chatId,
+                    'platform_ids.telegram': chatId,
+                    contactName,
+                },
+            });
+            if (delivered) {
+                delete cardUpdate.messages;
+                delete cardUpdate['botState.messageQueue'];
+                delete cardUpdate['botState.engine'];
+                cardUpdate.conversationId = cardSnap.data()?.conversationId || cardId;
+            }
+
             await cardRef.update(cardUpdate);
         } else {
             // Create new Lead Capture
@@ -175,7 +220,7 @@ export async function POST(req: Request) {
         // 3. Trigger Chatbot
         if (cardId && groupId) {
             await processChatbotFlow({
-                userId, entityId, groupId, cardId, 
+                userId: resolvedUserId, entityId: resolvedEntityId, groupId, cardId, 
                 platform: 'telegram', from: chatId, text: text || '',
                 messageId: messageId,
                 botsCollection: 'telegram-bots',

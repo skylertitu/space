@@ -24,6 +24,10 @@ export const CONVERSATION_PREVIEW_FIELDS = [
     'crmId',
     'contactId',
     'humanTakeover',
+    'assignedTo',
+    'assignedToUid',
+    'isHandledByHuman',
+    'botActive',
 ] as const;
 
 /** Fields that must NEVER live as source of truth on a kanban card. */

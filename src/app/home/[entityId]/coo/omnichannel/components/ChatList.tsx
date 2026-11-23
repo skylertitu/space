@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Search, Filter, Clock, MessageCircle, ChevronDown, Check, CheckCheck, Mic, Mail, Globe2, Inbox, Users, CheckCircle, Instagram, Facebook, Twitter, Send, Phone, BadgeCheck, UserCheck, Bot } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Search, Filter, Clock, MessageCircle, ChevronDown, Check, CheckCheck, Mic, Mail, Globe2, Inbox, Users, CheckCircle, Instagram, Facebook, Twitter, Send, Phone, BadgeCheck, UserCheck, Bot, Plus, Sparkles, Loader2, ArrowLeft } from 'lucide-react';
 import WhatsappIcon from '@/components/icons/WhatsappIcon';
 import { isInstagramCard, resolveCardChannel, resolveOmnichannelBadge } from '@/lib/omnichannel/resolveCardChannel';
 import { getCountryStatsSummary, extractCardPhoneNumber } from '@/lib/omnichannel/countryStats';
@@ -9,8 +10,22 @@ import { getContactHeaderNames, getContactPhoneDisplay } from '@/lib/omnichannel
 import { getCountryFromPhone } from '@/lib/countryCodes';
 import { normalizePhoneNumber } from '@/lib/phoneUtils';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEntityRoute } from '@/hooks/useEntityRoute';
 import { subscribeSlotConnections } from '@/lib/whatsapp/numbers';
-import { isHumanTakeoverActive } from '@/lib/omnichannel/humanTakeover';
+import { isAssignedToMe, isHumanTakeoverActive, isUnassignedChat } from '@/lib/omnichannel/humanTakeover';
+import { db } from '@/lib/firebase';
+import { doc, setDoc, Timestamp } from 'firebase/firestore';
+import { toast } from 'sonner';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 
 interface ChatListProps {
     selectedFolder: string;
@@ -34,25 +49,26 @@ const TAB_ITEMS = [
     { id: 'gmail', label: 'Gmail', type: 'gmail' },
 ];
 
-function renderTabIcon(type: string, isActive: boolean) {
-    if (type === 'inbox') return <Inbox size={14} className={isActive ? "text-blue-400" : "text-neutral-400 group-hover:text-white"} />;
-    if (type === 'mine') return <Users size={14} className={isActive ? "text-blue-400" : "text-neutral-400 group-hover:text-white"} />;
-    if (type === 'unassigned') return <CheckCircle size={14} className={isActive ? "text-blue-400" : "text-neutral-400 group-hover:text-white"} />;
-    if (type === 'whatsapp') return <WhatsappIcon className={`w-3.5 h-3.5 ${isActive ? "text-[#25D366]" : "text-neutral-400 group-hover:text-white"}`} />;
-    if (type === 'instagram') return <Instagram size={14} className={isActive ? "text-pink-500" : "text-neutral-400 group-hover:text-white"} />;
-    if (type === 'messenger') return <Facebook size={14} className={isActive ? "text-blue-500" : "text-neutral-400 group-hover:text-white"} />;
-    if (type === 'telegram') return <Send size={14} className={isActive ? "text-sky-400" : "text-neutral-400 group-hover:text-white"} />;
-    if (type === 'twitter') return <Twitter size={14} className={isActive ? "text-white" : "text-neutral-400 group-hover:text-white"} />;
-    if (type === 'gmail') return <Mail size={14} className={isActive ? "text-red-500" : "text-neutral-400 group-hover:text-white"} />;
-    return <Inbox size={14} className="opacity-60" />;
+function renderTabIcon(type: string, isActive: boolean, size: number = 18) {
+    const iconClass = isActive ? "" : "text-neutral-400 group-hover:text-white transition-colors";
+    if (type === 'inbox') return <Inbox size={size} className={isActive ? "text-blue-400" : iconClass} />;
+    if (type === 'mine') return <Users size={size} className={isActive ? "text-blue-400" : iconClass} />;
+    if (type === 'unassigned') return <CheckCircle size={size} className={isActive ? "text-blue-400" : iconClass} />;
+    if (type === 'whatsapp') return <WhatsappIcon className={`w-[18px] h-[18px] ${isActive ? "text-[#25D366]" : iconClass}`} />;
+    if (type === 'instagram') return <Instagram size={size} className={isActive ? "text-pink-400" : iconClass} />;
+    if (type === 'messenger') return <Facebook size={size} className={isActive ? "text-blue-400" : iconClass} />;
+    if (type === 'telegram') return <Send size={size} className={isActive ? "text-sky-400" : iconClass} />;
+    if (type === 'twitter') return <Twitter size={size} className={isActive ? "text-white" : iconClass} />;
+    if (type === 'gmail') return <Mail size={size} className={isActive ? "text-red-400" : iconClass} />;
+    return <Inbox size={size} className="opacity-60" />;
 }
 
-function filterCardsByFolder(cards: any[], selectedFolder: string): any[] {
+function filterCardsByFolder(cards: any[], selectedFolder: string, uid?: string | null): any[] {
     if (selectedFolder === 'mine') {
-        return cards.filter(c => c.assignedTo === 'Mío');
+        return cards.filter(c => isAssignedToMe(c, uid));
     }
     if (selectedFolder === 'unassigned') {
-        return cards.filter(c => !c.assignedTo || c.assignedTo === 'Unassigned');
+        return cards.filter(c => isUnassignedChat(c));
     }
     if (selectedFolder === 'whatsapp') {
         return cards.filter(c => {
@@ -304,16 +320,162 @@ export default function ChatList({ selectedFolder, setSelectedFolder, activeConv
     const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
     const [selectedTakeover, setSelectedTakeover] = useState<'human' | 'bot' | null>(null);
 
-    const [showCountryDropdown, setShowCountryDropdown] = useState(false);
-    const [showPhoneDropdown, setShowPhoneDropdown] = useState(false);
-    const [showStatusDropdown, setShowStatusDropdown] = useState(false);
-    const [showTakeoverDropdown, setShowTakeoverDropdown] = useState(false);
-
     const filterMenuRef = useRef<HTMLDivElement>(null);
-    const countryMenuRef = useRef<HTMLDivElement>(null);
-    const phoneMenuRef = useRef<HTMLDivElement>(null);
-    const statusMenuRef = useRef<HTMLDivElement>(null);
-    const takeoverMenuRef = useRef<HTMLDivElement>(null);
+    const router = useRouter();
+
+    const { firestoreId, routeSegment } = useEntityRoute();
+    const effectiveEntityId = firestoreId || activeEntity || '';
+    const tenantPath = currentUser?.uid && effectiveEntityId ? `users/${currentUser.uid}/entities/${effectiveEntityId}` : null;
+
+    // New Chat Modal state
+    const [isNewChatModalOpen, setIsNewChatModalOpen] = useState(false);
+    const [newContactNumber, setNewContactNumber] = useState('');
+    const [newContactName, setNewContactName] = useState('');
+    const [newChatChannel, setNewChatChannel] = useState('whatsapp');
+    const [initialMessageText, setInitialMessageText] = useState('');
+    const [isSubmittingNewChat, setIsSubmittingNewChat] = useState(false);
+    const [isCreatingTest, setIsCreatingTest] = useState(false);
+
+    const handleCreateNewChat = async () => {
+        if (!newContactNumber.trim()) {
+            toast.error('Ingresa un número de teléfono o identificador.');
+            return;
+        }
+        if (!tenantPath) {
+            toast.error('Sesión o entidad no disponible.');
+            return;
+        }
+
+        setIsSubmittingNewChat(true);
+        try {
+            const cleanDigits = newContactNumber.replace(/\D/g, '');
+            const cardId = `chat_${cleanDigits || Date.now()}`;
+            const cardRef = doc(db, `${tenantPath}/kanban-groups/inbox/cards/${cardId}`);
+            const convRef = doc(db, `${tenantPath}/conversations/${cardId}`);
+            const now = Timestamp.now();
+
+            const initialMsg = initialMessageText.trim()
+                ? [
+                      {
+                          id: `msg_${Date.now()}`,
+                          text: initialMessageText.trim(),
+                          sender: 'agent',
+                          timestamp: now,
+                          status: 'delivered',
+                      },
+                  ]
+                : [];
+
+            const cardData = {
+                id: cardId,
+                conversationId: cardId,
+                groupId: 'inbox',
+                name: newContactName.trim() || newContactNumber.trim(),
+                contactNumber: newContactNumber.trim(),
+                contactNumberClean: cleanDigits,
+                phone: newContactNumber.trim(),
+                channel: newChatChannel,
+                source: newChatChannel,
+                primary_channel: newChatChannel,
+                status: 'Nuevo Aplicante',
+                unreadCount: 0,
+                createdAt: now,
+                updatedAt: now,
+                humanTakeover: {
+                    active: true,
+                    activatedAt: now,
+                    activatedBy: currentUser?.uid || 'agent',
+                    activatedByName: currentUser?.displayName || 'Agente',
+                },
+                messages: initialMsg,
+                lastMessage: initialMessageText.trim() || 'Conversación iniciada',
+                lastMessageTimestamp: now,
+            };
+
+            await setDoc(cardRef, cardData, { merge: true });
+            await setDoc(convRef, cardData, { merge: true });
+
+            toast.success(`Conversación creada con ${newContactName || newContactNumber}.`);
+            setIsNewChatModalOpen(false);
+            setNewContactNumber('');
+            setNewContactName('');
+            setInitialMessageText('');
+            setActiveConversationId(cardId);
+        } catch (err) {
+            console.error('Error creating chat:', err);
+            toast.error('No se pudo crear la conversación.');
+        } finally {
+            setIsSubmittingNewChat(false);
+        }
+    };
+
+    const handleCreateTestChat = async () => {
+        if (!tenantPath) {
+            toast.error('Sesión o entidad no disponible.');
+            return;
+        }
+        setIsCreatingTest(true);
+        try {
+            const samplePhones = ['+1 415 555 2671', '+34 600 123 456', '+52 55 8765 4321'];
+            const sampleNames = ['Cliente de Prueba', 'Sara Morales', 'Carlos Mendoza'];
+            const sampleTexts = [
+                '¡Hola! Quisiera información sobre sus paquetes y cotizaciones.',
+                'Buenos días, me gustaría hablar con un asesor por favor.',
+                'Hola, vi su publicación y quiero agendar una llamada.',
+            ];
+            const idx = Math.floor(Math.random() * samplePhones.length);
+            const cardId = `test_${Date.now().toString().slice(-6)}`;
+            const now = Timestamp.now();
+            const cleanDigits = samplePhones[idx].replace(/\D/g, '');
+
+            const cardRef = doc(db, `${tenantPath}/kanban-groups/inbox/cards/${cardId}`);
+            const convRef = doc(db, `${tenantPath}/conversations/${cardId}`);
+
+            const channelForTest = selectedFolder === 'all' || !selectedFolder ? 'whatsapp' : selectedFolder;
+
+            const testCard = {
+                id: cardId,
+                conversationId: cardId,
+                groupId: 'inbox',
+                name: `${sampleNames[idx]} (Prueba)`,
+                contactNumber: samplePhones[idx],
+                contactNumberClean: cleanDigits,
+                phone: samplePhones[idx],
+                channel: channelForTest,
+                source: channelForTest,
+                primary_channel: channelForTest,
+                status: 'Nuevo Aplicante',
+                unreadCount: 1,
+                createdAt: now,
+                updatedAt: now,
+                humanTakeover: {
+                    active: false,
+                },
+                messages: [
+                    {
+                        id: `msg_${Date.now()}`,
+                        text: sampleTexts[idx],
+                        sender: 'user',
+                        timestamp: now,
+                        status: 'delivered',
+                    },
+                ],
+                lastMessage: sampleTexts[idx],
+                lastMessageTimestamp: now,
+            };
+
+            await setDoc(cardRef, testCard);
+            await setDoc(convRef, testCard);
+
+            toast.success('Mensaje de prueba generado con éxito.');
+            setActiveConversationId(cardId);
+        } catch (err) {
+            console.error('Error generating test chat:', err);
+            toast.error('No se pudo generar el mensaje de prueba.');
+        } finally {
+            setIsCreatingTest(false);
+        }
+    };
 
     // Real-time subscription to CTO Integrations (whatsapp_numbers & legacy integrations)
     const [ctoSlotConnections, setCtoSlotConnections] = useState<Record<string, any>>({});
@@ -332,18 +494,6 @@ export default function ChatList({ selectedFolder, setSelectedFolder, activeConv
         function handleClickOutside(event: MouseEvent) {
             if (filterMenuRef.current && !filterMenuRef.current.contains(event.target as Node)) {
                 setShowFilterMenu(false);
-            }
-            if (countryMenuRef.current && !countryMenuRef.current.contains(event.target as Node)) {
-                setShowCountryDropdown(false);
-            }
-            if (phoneMenuRef.current && !phoneMenuRef.current.contains(event.target as Node)) {
-                setShowPhoneDropdown(false);
-            }
-            if (statusMenuRef.current && !statusMenuRef.current.contains(event.target as Node)) {
-                setShowStatusDropdown(false);
-            }
-            if (takeoverMenuRef.current && !takeoverMenuRef.current.contains(event.target as Node)) {
-                setShowTakeoverDropdown(false);
             }
         }
         document.addEventListener('mousedown', handleClickOutside);
@@ -374,22 +524,22 @@ export default function ChatList({ selectedFolder, setSelectedFolder, activeConv
         });
 
         const list = Array.from(phoneMap.values());
-        const folderCards = dedupeCards(filterCardsByFolder(cards, selectedFolder));
+        const folderCards = dedupeCards(filterCardsByFolder(cards, selectedFolder, currentUser?.uid));
 
         return list.map(p => {
             const count = filterCardsByApiPhone(folderCards, p.id, list).length;
             return { ...p, count };
         });
-    }, [ctoSlotConnections, cards, selectedFolder]);
+    }, [ctoSlotConnections, cards, selectedFolder, currentUser?.uid]);
 
     const countryStats = useMemo(() => {
-        const folderCards = dedupeCards(filterCardsByFolder(cards, selectedFolder));
+        const folderCards = dedupeCards(filterCardsByFolder(cards, selectedFolder, currentUser?.uid));
         const apiFilteredCards = filterCardsByApiPhone(folderCards, selectedApiPhone, availableApiPhones);
         return getCountryStatsSummary(apiFilteredCards);
-    }, [cards, selectedFolder, selectedApiPhone, availableApiPhones]);
+    }, [cards, selectedFolder, selectedApiPhone, availableApiPhones, currentUser?.uid]);
 
     const statusStats = useMemo(() => {
-        const folderCards = dedupeCards(filterCardsByFolder(cards, selectedFolder));
+        const folderCards = dedupeCards(filterCardsByFolder(cards, selectedFolder, currentUser?.uid));
         const apiCards = filterCardsByApiPhone(folderCards, selectedApiPhone, availableApiPhones);
         const countryCards = selectedCountry
             ? apiCards.filter(c => {
@@ -421,10 +571,10 @@ export default function ChatList({ selectedFolder, setSelectedFolder, activeConv
             total: countryCards.length,
             byStatus: Object.entries(counts).map(([status, count]) => ({ status, count })),
         };
-    }, [cards, selectedFolder, selectedApiPhone, availableApiPhones, selectedCountry]);
+    }, [cards, selectedFolder, selectedApiPhone, availableApiPhones, selectedCountry, currentUser?.uid]);
 
     const takeoverStats = useMemo(() => {
-        const folderCards = dedupeCards(filterCardsByFolder(cards, selectedFolder));
+        const folderCards = dedupeCards(filterCardsByFolder(cards, selectedFolder, currentUser?.uid));
         const apiCards = filterCardsByApiPhone(folderCards, selectedApiPhone, availableApiPhones);
         const countryCards = selectedCountry
             ? apiCards.filter(c => {
@@ -458,13 +608,13 @@ export default function ChatList({ selectedFolder, setSelectedFolder, activeConv
             human: humanCount,
             bot: botCount,
         };
-    }, [cards, selectedFolder, selectedApiPhone, availableApiPhones, selectedCountry, selectedStatus]);
+    }, [cards, selectedFolder, selectedApiPhone, availableApiPhones, selectedCountry, selectedStatus, currentUser?.uid]);
 
     const tabCounts = useMemo(() => {
         return {
             all: cards.reduce((acc, c) => acc + (c.unreadCount || 0), 0),
-            mine: cards.filter(c => c.assignedTo === 'Mío').reduce((acc, c) => acc + (c.unreadCount || 0), 0),
-            unassigned: cards.filter(c => !c.assignedTo || c.assignedTo === 'Unassigned').reduce((acc, c) => acc + (c.unreadCount || 0), 0),
+            mine: cards.filter(c => isAssignedToMe(c, currentUser?.uid)).reduce((acc, c) => acc + (c.unreadCount || 0), 0),
+            unassigned: cards.filter(c => isUnassignedChat(c)).reduce((acc, c) => acc + (c.unreadCount || 0), 0),
             whatsapp: cards.filter(c => (c.channel || c.source || c.primary_channel || '').toLowerCase().includes('whatsapp')).reduce((acc, c) => acc + (c.unreadCount || 0), 0),
             instagram: cards.filter(c => isInstagramCard(c)).reduce((acc, c) => acc + (c.unreadCount || 0), 0),
             messenger: cards.filter(c => {
@@ -481,10 +631,10 @@ export default function ChatList({ selectedFolder, setSelectedFolder, activeConv
                 return src.includes('gmail') || src.includes('email');
             }).reduce((acc, c) => acc + (c.unreadCount || 0), 0),
         };
-    }, [cards]);
+    }, [cards, currentUser?.uid]);
 
     const conversations = useMemo(() => {
-        let filtered = filterCardsByFolder(cards, selectedFolder);
+        let filtered = filterCardsByFolder(cards, selectedFolder, currentUser?.uid);
         filtered = filterCardsByApiPhone(filtered, selectedApiPhone, availableApiPhones);
 
         if (filterBy === 'unread') {
@@ -549,393 +699,325 @@ export default function ChatList({ selectedFolder, setSelectedFolder, activeConv
             unread: c.unreadCount || 0,
             presence: c.presence || null,
         }));
-    }, [cards, selectedFolder, searchQuery, sortBy, filterBy, selectedCountry, selectedApiPhone, selectedStatus, selectedTakeover, availableApiPhones]);
+    }, [cards, selectedFolder, searchQuery, sortBy, filterBy, selectedCountry, selectedApiPhone, selectedStatus, selectedTakeover, availableApiPhones, currentUser?.uid]);
+
+    const hasActiveFilters = Boolean(
+        selectedCountry ||
+        selectedApiPhone ||
+        selectedStatus ||
+        selectedTakeover ||
+        filterBy !== 'all' ||
+        sortBy !== 'newest'
+    );
+
+    const resetAllFilters = () => {
+        setSortBy('newest');
+        setFilterBy('all');
+        setSelectedApiPhone(null);
+        setSelectedCountry(null);
+        setSelectedStatus(null);
+        setSelectedTakeover(null);
+    };
 
     return (
-        <div className="w-full bg-[#0d0d0d] flex flex-col h-full flex-shrink-0 text-white">
-            {/* Browser Style Channel Tabs Bar with Equal Tab Widths */}
-            <div className="bg-[#070708] border-b border-neutral-900 pt-1.5 px-1.5 flex items-center overflow-x-auto overflow-y-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden scroll-smooth select-none gap-0.5 shrink-0">
-                {TAB_ITEMS.map((tab, idx) => {
+        <div className="w-full bg-[#0d0d0d] flex flex-row h-full flex-shrink-0 text-white overflow-hidden">
+            {/* Left Vertical Channel Icons Bar (Only Icons) */}
+            <aside className="w-11 bg-[#070708] border-r border-neutral-900/90 flex flex-col items-center py-2.5 gap-2 shrink-0 select-none z-10">
+                {TAB_ITEMS.map((tab) => {
                     const isActive = selectedFolder === tab.id;
                     const unread = tabCounts[tab.id as keyof typeof tabCounts] || 0;
-                    const nextIsActive = selectedFolder === TAB_ITEMS[idx + 1]?.id;
 
                     return (
-                        <React.Fragment key={tab.id}>
-                            <button
-                                type="button"
-                                onClick={() => setSelectedFolder?.(tab.id)}
-                                title={tab.label}
-                                className={`
-                                    group relative flex items-center justify-center gap-1.5 px-2 py-1.5 text-[11px] font-medium transition-all duration-150 shrink-0 select-none rounded-t-lg border-t border-x flex-1 basis-0 w-full min-w-[100px] text-center
-                                    ${isActive 
-                                        ? 'bg-[#0d0d0d] text-white border-neutral-800/90 font-semibold -mb-[1px] z-10 shadow-[0_-2px_10px_rgba(0,0,0,0.5)]' 
-                                        : 'bg-transparent text-neutral-400 hover:text-neutral-200 hover:bg-neutral-900/70 border-transparent'
-                                    }
-                                `}
-                            >
-                                {isActive && (
-                                    <span className="absolute top-0 left-0 right-0 h-[2px] bg-blue-500 rounded-t-lg shadow-[0_0_8px_rgba(59,130,246,0.9)]" />
-                                )}
-
-                                <span className="flex items-center justify-center shrink-0">
-                                    {renderTabIcon(tab.type, isActive)}
-                                </span>
-
-                                <span className="whitespace-nowrap truncate">{tab.label}</span>
-
-                                {unread > 0 && (
-                                    <span className={`
-                                        ml-0.5 min-w-[15px] h-[15px] px-1 rounded-full text-[9px] font-bold flex items-center justify-center leading-none shrink-0
-                                        ${isActive ? 'bg-blue-600 text-white shadow-sm' : 'bg-neutral-800 text-blue-400 border border-blue-500/30'}
-                                    `}>
-                                        {unread > 99 ? '99+' : unread}
-                                    </span>
-                                )}
-                            </button>
-
-                            {!isActive && !nextIsActive && idx < TAB_ITEMS.length - 1 && (
-                                <div className="h-3.5 w-[1px] bg-neutral-800/70 shrink-0 self-center mx-0.5" />
+                        <button
+                            key={tab.id}
+                            type="button"
+                            onClick={() => setSelectedFolder?.(tab.id)}
+                            title={tab.label}
+                            aria-label={tab.label}
+                            className={`group relative flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-150 ${
+                                isActive
+                                    ? 'bg-neutral-800 text-white shadow-sm border border-neutral-700/80'
+                                    : 'text-neutral-500 hover:text-neutral-200 hover:bg-neutral-900/80 border border-transparent'
+                            }`}
+                        >
+                            {isActive && (
+                                <span className="absolute -left-[3px] top-1.5 bottom-1.5 w-[2.5px] bg-blue-500 rounded-r-full shadow-[0_0_8px_rgba(59,130,246,0.9)]" />
                             )}
-                        </React.Fragment>
+
+                            <span className="flex items-center justify-center shrink-0">
+                                {renderTabIcon(tab.type, isActive, 16)}
+                            </span>
+
+                            {unread > 0 && (
+                                <span className={`absolute -top-1 -right-1 min-w-[14px] h-[14px] px-0.5 rounded-full text-[8px] font-bold flex items-center justify-center leading-none shadow-sm ${
+                                    isActive ? 'bg-blue-600 text-white' : 'bg-neutral-800 text-blue-400 border border-blue-500/30'
+                                }`}>
+                                    {unread > 99 ? '99+' : unread}
+                                </span>
+                            )}
+                        </button>
                     );
                 })}
-            </div>
+            </aside>
 
-            {/* Tab-Specific Tools Sub-Toolbar (Above Search Bar) */}
-            <div className="px-2.5 py-1.5 bg-[#09090b] border-b border-neutral-900 flex items-center justify-between gap-1.5 overflow-visible shrink-0">
-                <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                    
-                    {/* 1. WhatsApp API Phone Line Filter */}
-                    {(selectedFolder === 'whatsapp' || selectedFolder === 'all') && (
-                        <div className="relative flex-1 basis-0 min-w-[105px]" ref={phoneMenuRef}>
-                            <button
+            {/* Main Content Column */}
+            <div className="flex-1 min-w-0 flex flex-col h-full bg-[#0d0d0d] overflow-hidden">
+                {/* Search & Integrated Filters Bar */}
+                <div className="p-2 border-b border-neutral-900 bg-[#0d0d0d] space-y-2 overflow-visible shrink-0">
+                    <div className="flex items-center justify-between gap-1.5 relative">
+                        <div className="relative flex-1">
+                            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-600" size={12} />
+                            <input
+                                type="text"
+                                placeholder="Buscar..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full bg-neutral-900/80 border border-neutral-800/80 rounded-lg py-1.5 pl-7 pr-2 text-[11px] focus:outline-none focus:border-blue-500/60 transition-all placeholder:text-neutral-600"
+                            />
+                        </div>
+
+                        {/* Quick New Chat Button */}
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setNewContactNumber('');
+                                setNewContactName('');
+                                setInitialMessageText('');
+                                setNewChatChannel(selectedFolder === 'all' ? 'whatsapp' : selectedFolder);
+                                setIsNewChatModalOpen(true);
+                            }}
+                            className="p-1.5 rounded-lg bg-white/10 hover:bg-white text-white hover:text-black border border-white/10 transition-all shrink-0"
+                            title="Nueva Conversación"
+                            aria-label="Nueva Conversación"
+                        >
+                            <Plus size={14} />
+                        </button>
+
+                        {/* Quick Simulate Test Chat Button */}
+                        <button
+                            type="button"
+                            onClick={handleCreateTestChat}
+                            disabled={isCreatingTest}
+                            className="p-1.5 rounded-lg bg-blue-500/15 hover:bg-blue-500/25 text-blue-400 border border-blue-500/30 transition-all shrink-0"
+                            title="Simular Mensaje de Prueba"
+                            aria-label="Simular Mensaje de Prueba"
+                        >
+                            {isCreatingTest ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
+                        </button>
+
+                        {/* Integrated Filter Button & Popover */}
+                        <div className="relative shrink-0" ref={filterMenuRef}>
+                            <button 
                                 type="button"
-                                onClick={() => setShowPhoneDropdown(!showPhoneDropdown)}
-                                className={`w-full flex items-center justify-between gap-1 px-2 py-1 rounded-lg text-[11px] font-medium border transition-all ${
-                                    selectedApiPhone 
-                                        ? 'bg-neutral-800 border-neutral-700 text-white font-semibold shadow-sm' 
-                                        : 'bg-neutral-900/90 border-neutral-800 text-neutral-300 hover:text-white hover:border-neutral-700'
+                                onClick={() => setShowFilterMenu(!showFilterMenu)}
+                                className={`relative p-2 rounded-lg border transition-colors ${
+                                    showFilterMenu || hasActiveFilters 
+                                        ? 'text-blue-400 bg-blue-500/15 border-blue-500/30 shadow-sm' 
+                                        : 'text-neutral-400 bg-neutral-900/80 border-neutral-800/80 hover:text-white hover:bg-neutral-800'
                                 }`}
-                                title="Filtrar por número API de WhatsApp (CTO Integraciones)"
+                                title="Filtros y ordenación"
                             >
-                                <div className="flex items-center gap-1.5 min-w-0 truncate">
-                                    <Phone size={11} className={selectedApiPhone ? "text-white shrink-0" : "text-neutral-400 shrink-0"} />
-                                    <span className="truncate">
-                                        {selectedApiPhone 
-                                            ? (availableApiPhones.find(p => p.id === selectedApiPhone)?.label || selectedApiPhone)
-                                            : "Número API"
-                                        }
-                                    </span>
-                                </div>
-                                <ChevronDown size={11} className="text-neutral-500 shrink-0" />
+                                <Filter size={13} />
+                                {hasActiveFilters && (
+                                    <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_6px_rgba(59,130,246,0.9)]" />
+                                )}
                             </button>
 
-                            {showPhoneDropdown && (
-                                <div className="absolute top-full left-0 mt-1.5 w-64 bg-neutral-900 border border-neutral-800 rounded-xl shadow-2xl z-[70] overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150 p-1">
-                                    <div className="px-2.5 py-1.5 border-b border-neutral-800 text-[9px] font-bold uppercase tracking-widest text-neutral-500 flex justify-between items-center">
-                                        <span>Líneas API Conectadas</span>
-                                        <span className="text-[10px] text-neutral-400 font-mono">{availableApiPhones.length} activas</span>
-                                    </div>
-                                    <button
-                                        type="button"
-                                        onClick={() => { setSelectedApiPhone(null); setShowPhoneDropdown(false); }}
-                                        className={`w-full text-left px-2.5 py-1.5 text-[11px] rounded-md transition-colors flex items-center justify-between ${!selectedApiPhone ? 'bg-neutral-800 text-white font-medium' : 'text-neutral-300 hover:bg-neutral-800'}`}
-                                    >
-                                        <span className="flex items-center gap-2">
-                                            <Phone size={11} className="text-neutral-400" />
-                                            Todos los números API
+                            {showFilterMenu && (
+                                <div className="absolute top-full right-0 mt-1.5 w-64 max-h-[75vh] bg-neutral-900 border border-neutral-800 rounded-xl shadow-2xl z-[70] overflow-y-auto scrollbar-thin scrollbar-thumb-neutral-800 animate-in fade-in slide-in-from-top-1 duration-150 p-2 space-y-2.5">
+                                    {/* Sort by */}
+                                    <div>
+                                        <span className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest block mb-1">
+                                            Ordenar por
                                         </span>
-                                        {!selectedApiPhone && <Check size={12} className="text-neutral-300" />}
-                                    </button>
-                                    <div className="max-h-52 overflow-y-auto scrollbar-thin scrollbar-thumb-neutral-800 space-y-0.5 pt-0.5">
-                                        {availableApiPhones.length === 0 ? (
-                                            <div className="px-2.5 py-2 text-[10px] text-neutral-500 italic">
-                                                Sin números API configurados en Integraciones
-                                            </div>
-                                        ) : (
-                                            availableApiPhones.map(p => (
-                                                <button
-                                                    key={p.id}
-                                                    type="button"
-                                                    onClick={() => { setSelectedApiPhone(p.id); setShowPhoneDropdown(false); }}
-                                                    className={`w-full text-left px-2.5 py-1.5 text-[11px] rounded-md transition-colors flex items-center justify-between ${selectedApiPhone === p.id ? 'bg-neutral-800 text-white font-medium' : 'text-neutral-300 hover:bg-neutral-800'}`}
-                                                >
-                                                    <span className="flex items-center gap-2 truncate">
-                                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0 animate-pulse" />
-                                                        <span className="truncate">{p.label}</span>
-                                                    </span>
-                                                    <span className="text-[10px] bg-neutral-800 px-1.5 py-0.5 rounded text-neutral-400 font-mono">
-                                                        {p.count}
-                                                    </span>
-                                                </button>
-                                            ))
-                                        )}
+                                        <div className="grid grid-cols-2 gap-1">
+                                            <button
+                                                type="button"
+                                                onClick={() => setSortBy('newest')}
+                                                className={`px-2 py-1 text-[11px] rounded transition-colors text-left flex items-center justify-between ${
+                                                    sortBy === 'newest' ? 'bg-blue-600/20 text-blue-400 font-medium border border-blue-500/30' : 'bg-neutral-950 text-neutral-400 hover:text-white border border-neutral-800'
+                                                }`}
+                                            >
+                                                <span>Recientes</span>
+                                                {sortBy === 'newest' && <Check size={11} />}
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setSortBy('oldest')}
+                                                className={`px-2 py-1 text-[11px] rounded transition-colors text-left flex items-center justify-between ${
+                                                    sortBy === 'oldest' ? 'bg-blue-600/20 text-blue-400 font-medium border border-blue-500/30' : 'bg-neutral-950 text-neutral-400 hover:text-white border border-neutral-800'
+                                                }`}
+                                            >
+                                                <span>Antiguos</span>
+                                                {sortBy === 'oldest' && <Check size={11} />}
+                                            </button>
+                                        </div>
                                     </div>
+
+                                    {/* Filter by Unread */}
+                                    <div>
+                                        <span className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest block mb-1">
+                                            Mensajes
+                                        </span>
+                                        <div className="grid grid-cols-2 gap-1">
+                                            <button
+                                                type="button"
+                                                onClick={() => setFilterBy('all')}
+                                                className={`px-2 py-1 text-[11px] rounded transition-colors text-left flex items-center justify-between ${
+                                                    filterBy === 'all' ? 'bg-blue-600/20 text-blue-400 font-medium border border-blue-500/30' : 'bg-neutral-950 text-neutral-400 hover:text-white border border-neutral-800'
+                                                }`}
+                                            >
+                                                <span>Todos</span>
+                                                {filterBy === 'all' && <Check size={11} />}
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setFilterBy('unread')}
+                                                className={`px-2 py-1 text-[11px] rounded transition-colors text-left flex items-center justify-between ${
+                                                    filterBy === 'unread' ? 'bg-blue-600/20 text-blue-400 font-medium border border-blue-500/30' : 'bg-neutral-950 text-neutral-400 hover:text-white border border-neutral-800'
+                                                }`}
+                                            >
+                                                <span>No leídos</span>
+                                                {filterBy === 'unread' && <Check size={11} />}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Número API (WhatsApp / Todos) */}
+                                    {(selectedFolder === 'whatsapp' || selectedFolder === 'all') && (
+                                        <div>
+                                            <label className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest block mb-1">
+                                                Línea / Número API
+                                            </label>
+                                            <select
+                                                value={selectedApiPhone || ''}
+                                                onChange={(e) => setSelectedApiPhone(e.target.value || null)}
+                                                className="w-full bg-neutral-950 border border-neutral-800 rounded px-2 py-1.5 text-[11px] text-neutral-300 focus:outline-none focus:border-blue-500 transition-colors"
+                                            >
+                                                <option value="">Todos los números API</option>
+                                                {availableApiPhones.map((p) => (
+                                                    <option key={p.id} value={p.id}>
+                                                        {p.label} ({p.count})
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    )}
+
+                                    {/* País */}
+                                    <div>
+                                        <label className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest block mb-1">
+                                            País ({countryStats.total})
+                                        </label>
+                                        <select
+                                            value={selectedCountry || ''}
+                                            onChange={(e) => setSelectedCountry(e.target.value || null)}
+                                            className="w-full bg-neutral-950 border border-neutral-800 rounded px-2 py-1.5 text-[11px] text-neutral-300 focus:outline-none focus:border-blue-500 transition-colors"
+                                        >
+                                            <option value="">Todos los países</option>
+                                            {countryStats.byCountry.map((stat) => (
+                                                <option key={stat.iso} value={stat.iso}>
+                                                    {stat.country} ({stat.count})
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    {/* Estatus Lead */}
+                                    <div>
+                                        <label className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest block mb-1">
+                                            Estatus Lead ({statusStats.total})
+                                        </label>
+                                        <select
+                                            value={selectedStatus || ''}
+                                            onChange={(e) => setSelectedStatus(e.target.value || null)}
+                                            className="w-full bg-neutral-950 border border-neutral-800 rounded px-2 py-1.5 text-[11px] text-neutral-300 focus:outline-none focus:border-blue-500 transition-colors"
+                                        >
+                                            <option value="">Todos los estatus</option>
+                                            {statusStats.byStatus.map((st) => (
+                                                <option key={st.status} value={st.status}>
+                                                    {st.status} ({st.count})
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    {/* Atención Humana vs Bot SI */}
+                                    <div>
+                                        <label className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest block mb-1">
+                                            Atención ({takeoverStats.total})
+                                        </label>
+                                        <select
+                                            value={selectedTakeover || ''}
+                                            onChange={(e) => setSelectedTakeover(e.target.value ? (e.target.value as 'human' | 'bot') : null)}
+                                            className="w-full bg-neutral-950 border border-neutral-800 rounded px-2 py-1.5 text-[11px] text-neutral-300 focus:outline-none focus:border-blue-500 transition-colors"
+                                        >
+                                            <option value="">Toda la atención</option>
+                                            <option value="human">Control Humano (Agente) ({takeoverStats.human})</option>
+                                            <option value="bot">Bot SI Atendiendo ({takeoverStats.bot})</option>
+                                        </select>
+                                    </div>
+
+                                    {/* Reset all */}
+                                    {hasActiveFilters && (
+                                        <div className="pt-1 border-t border-neutral-800">
+                                            <button
+                                                type="button"
+                                                onClick={resetAllFilters}
+                                                className="w-full py-1.5 text-[10px] font-bold text-blue-400 hover:text-blue-300 uppercase tracking-widest text-center bg-blue-500/10 hover:bg-blue-500/20 rounded transition-colors"
+                                            >
+                                                Limpiar todos los filtros
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>
+                    </div>
+
+                    {/* Active filter badges / chips */}
+                    {hasActiveFilters && (
+                        <div className="flex items-center gap-1 flex-wrap pt-0.5">
+                            {selectedApiPhone && (
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] bg-neutral-800 border border-neutral-700 text-neutral-300">
+                                    <span className="truncate max-w-[100px]">{availableApiPhones.find(p => p.id === selectedApiPhone)?.label || selectedApiPhone}</span>
+                                    <button type="button" onClick={() => setSelectedApiPhone(null)} className="hover:text-white">✕</button>
+                                </span>
+                            )}
+                            {selectedCountry && (
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] bg-neutral-800 border border-neutral-700 text-neutral-300">
+                                    <span>{countryStats.byCountry.find(c => c.iso === selectedCountry)?.country || selectedCountry}</span>
+                                    <button type="button" onClick={() => setSelectedCountry(null)} className="hover:text-white">✕</button>
+                                </span>
+                            )}
+                            {selectedStatus && (
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] bg-neutral-800 border border-neutral-700 text-neutral-300">
+                                    <span>{selectedStatus}</span>
+                                    <button type="button" onClick={() => setSelectedStatus(null)} className="hover:text-white">✕</button>
+                                </span>
+                            )}
+                            {selectedTakeover && (
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] bg-neutral-800 border border-neutral-700 text-neutral-300">
+                                    <span>{selectedTakeover === 'human' ? 'Agente' : 'Bot SI'}</span>
+                                    <button type="button" onClick={() => setSelectedTakeover(null)} className="hover:text-white">✕</button>
+                                </span>
+                            )}
+                            {filterBy === 'unread' && (
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] bg-blue-500/15 border border-blue-500/30 text-blue-400">
+                                    <span>No leídos</span>
+                                    <button type="button" onClick={() => setFilterBy('all')} className="hover:text-white">✕</button>
+                                </span>
+                            )}
+                            <button
+                                type="button"
+                                onClick={resetAllFilters}
+                                className="text-[9px] text-neutral-500 hover:text-white underline ml-0.5"
+                            >
+                                Limpiar
+                            </button>
+                        </div>
                     )}
-
-                    {/* 2. Interactive Country Filter Dropdown */}
-                    <div className="relative flex-1 basis-0 min-w-[105px]" ref={countryMenuRef}>
-                        <button
-                            type="button"
-                            onClick={() => setShowCountryDropdown(!showCountryDropdown)}
-                            className={`w-full flex items-center justify-between gap-1 px-2 py-1 rounded-lg text-[11px] font-medium border transition-all ${
-                                selectedCountry 
-                                    ? 'bg-neutral-800 border-neutral-700 text-white font-semibold shadow-sm' 
-                                    : 'bg-neutral-900/90 border-neutral-800 text-neutral-300 hover:text-white hover:border-neutral-700'
-                            }`}
-                            title="Filtrar por País del contacto"
-                        >
-                            <div className="flex items-center gap-1.5 min-w-0 truncate">
-                                {selectedCountry ? (
-                                    <CountryFlag iso={selectedCountry} country={countryStats.byCountry.find(c => c.iso === selectedCountry)?.country || selectedCountry} size="sm" />
-                                ) : (
-                                    <Globe2 size={11} className="text-neutral-400 shrink-0" />
-                                )}
-                                <span className="truncate">
-                                    {selectedCountry 
-                                        ? (countryStats.byCountry.find(c => c.iso === selectedCountry)?.country || selectedCountry)
-                                        : "País"
-                                    }
-                                </span>
-                            </div>
-                            <ChevronDown size={11} className="text-neutral-500 shrink-0" />
-                        </button>
-
-                        {showCountryDropdown && (
-                            <div className="absolute top-full left-0 mt-1.5 w-60 bg-neutral-900 border border-neutral-800 rounded-xl shadow-2xl z-[70] overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150 p-1">
-                                <div className="px-2.5 py-1.5 border-b border-neutral-800 text-[9px] font-bold uppercase tracking-widest text-neutral-500 flex justify-between items-center">
-                                    <span>Filtrar por País</span>
-                                    <span className="text-[10px] text-neutral-400 font-mono">{countryStats.total} contactos</span>
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={() => { setSelectedCountry(null); setShowCountryDropdown(false); }}
-                                    className={`w-full text-left px-2.5 py-1.5 text-[11px] rounded-md transition-colors flex items-center justify-between ${!selectedCountry ? 'bg-neutral-800 text-white font-medium' : 'text-neutral-300 hover:bg-neutral-800'}`}
-                                >
-                                    <span className="flex items-center gap-2">
-                                        <Globe2 size={12} className="text-neutral-400" />
-                                        Todos los países
-                                    </span>
-                                    <span className="text-[10px] text-neutral-500 font-mono">({countryStats.total})</span>
-                                </button>
-                                <div className="max-h-52 overflow-y-auto scrollbar-thin scrollbar-thumb-neutral-800 space-y-0.5 pt-0.5">
-                                    {countryStats.byCountry.map((stat) => (
-                                        <button
-                                            key={stat.iso}
-                                            type="button"
-                                            onClick={() => { setSelectedCountry(stat.iso); setShowCountryDropdown(false); }}
-                                            className={`w-full text-left px-2.5 py-1.5 text-[11px] rounded-md transition-colors flex items-center justify-between ${selectedCountry === stat.iso ? 'bg-neutral-800 text-white font-medium' : 'text-neutral-300 hover:bg-neutral-800'}`}
-                                        >
-                                            <span className="flex items-center gap-2 truncate">
-                                                <CountryFlag iso={stat.iso} country={stat.country} size="sm" />
-                                                <span className="truncate">{stat.country}</span>
-                                            </span>
-                                            <span className="text-[10px] bg-neutral-800 px-1.5 py-0.5 rounded text-neutral-400 font-mono">
-                                                {stat.count}
-                                            </span>
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* 3. Lead Stage / Status Filter */}
-                    <div className="relative flex-1 basis-0 min-w-[105px]" ref={statusMenuRef}>
-                        <button
-                            type="button"
-                            onClick={() => setShowStatusDropdown(!showStatusDropdown)}
-                            className={`w-full flex items-center justify-between gap-1 px-2 py-1 rounded-lg text-[11px] font-medium border transition-all ${
-                                selectedStatus 
-                                    ? 'bg-neutral-800 border-neutral-700 text-white font-semibold shadow-sm' 
-                                    : 'bg-neutral-900/90 border-neutral-800 text-neutral-300 hover:text-white hover:border-neutral-700'
-                            }`}
-                            title="Filtrar por Estatus / Etapa del Lead"
-                        >
-                            <div className="flex items-center gap-1.5 min-w-0 truncate">
-                                <BadgeCheck size={11} className={selectedStatus ? "text-white shrink-0" : "text-neutral-400 shrink-0"} />
-                                <span className="truncate">
-                                    {selectedStatus || "Estatus Lead"}
-                                </span>
-                            </div>
-                            <ChevronDown size={11} className="text-neutral-500 shrink-0" />
-                        </button>
-
-                        {showStatusDropdown && (
-                            <div className="absolute top-full left-0 mt-1.5 w-56 bg-neutral-900 border border-neutral-800 rounded-xl shadow-2xl z-[70] overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150 p-1">
-                                <div className="px-2.5 py-1.5 border-b border-neutral-800 text-[9px] font-bold uppercase tracking-widest text-neutral-500 flex justify-between items-center">
-                                    <span>Filtrar por Estatus</span>
-                                    <span className="text-[10px] text-neutral-400 font-mono">{statusStats.total} contactos</span>
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={() => { setSelectedStatus(null); setShowStatusDropdown(false); }}
-                                    className={`w-full text-left px-2.5 py-1.5 text-[11px] rounded-md transition-colors flex items-center justify-between ${!selectedStatus ? 'bg-neutral-800 text-white font-medium' : 'text-neutral-300 hover:bg-neutral-800'}`}
-                                >
-                                    <span>Todos los estatus</span>
-                                    <span className="text-[10px] text-neutral-500 font-mono">({statusStats.total})</span>
-                                </button>
-                                {statusStats.byStatus.map(st => (
-                                    <button
-                                        key={st.status}
-                                        type="button"
-                                        onClick={() => { setSelectedStatus(st.status); setShowStatusDropdown(false); }}
-                                        className={`w-full text-left px-2.5 py-1.5 text-[11px] rounded-md transition-colors flex items-center justify-between ${selectedStatus === st.status ? 'bg-neutral-800 text-white font-medium' : 'text-neutral-300 hover:bg-neutral-800'}`}
-                                    >
-                                        <span>{st.status}</span>
-                                        <span className="text-[10px] bg-neutral-800 px-1.5 py-0.5 rounded text-neutral-400 font-mono">
-                                            {st.count}
-                                        </span>
-                                    </button>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-
-                    {/* 4. Human Agent vs Bot SI Attention Filter */}
-                    <div className="relative flex-1 basis-0 min-w-[105px]" ref={takeoverMenuRef}>
-                        <button
-                            type="button"
-                            onClick={() => setShowTakeoverDropdown(!showTakeoverDropdown)}
-                            className={`w-full flex items-center justify-between gap-1 px-2 py-1 rounded-lg text-[11px] font-medium border transition-all ${
-                                selectedTakeover 
-                                    ? 'bg-neutral-800 border-neutral-700 text-white font-semibold shadow-sm' 
-                                    : 'bg-neutral-900/90 border-neutral-800 text-neutral-300 hover:text-white hover:border-neutral-700'
-                            }`}
-                            title="Filtrar por Atención Humana vs Bot SI"
-                        >
-                            <div className="flex items-center gap-1.5 min-w-0 truncate">
-                                {selectedTakeover === 'human' ? <UserCheck size={11} className="text-white shrink-0" /> : <Bot size={11} className={selectedTakeover ? "text-white shrink-0" : "text-neutral-400 shrink-0"} />}
-                                <span className="truncate">
-                                    {selectedTakeover === 'human' ? 'Atención Agente' : selectedTakeover === 'bot' ? 'Atención Bot SI' : 'Atención SI/Humana'}
-                                </span>
-                            </div>
-                            <ChevronDown size={11} className="text-neutral-500 shrink-0" />
-                        </button>
-
-                        {showTakeoverDropdown && (
-                            <div className="absolute top-full left-0 mt-1.5 w-60 bg-neutral-900 border border-neutral-800 rounded-xl shadow-2xl z-[70] overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150 p-1">
-                                <div className="px-2.5 py-1.5 border-b border-neutral-800 text-[9px] font-bold uppercase tracking-widest text-neutral-500 flex justify-between items-center">
-                                    <span>Filtrar por Atención</span>
-                                    <span className="text-[10px] text-neutral-400 font-mono">{takeoverStats.total} contactos</span>
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={() => { setSelectedTakeover(null); setShowTakeoverDropdown(false); }}
-                                    className={`w-full text-left px-2.5 py-1.5 text-[11px] rounded-md transition-colors flex items-center justify-between ${!selectedTakeover ? 'bg-neutral-800 text-white font-medium' : 'text-neutral-300 hover:bg-neutral-800'}`}
-                                >
-                                    <span>Toda la atención</span>
-                                    <span className="text-[10px] text-neutral-500 font-mono">({takeoverStats.total})</span>
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => { setSelectedTakeover('human'); setShowTakeoverDropdown(false); }}
-                                    className={`w-full text-left px-2.5 py-1.5 text-[11px] rounded-md transition-colors flex items-center justify-between ${selectedTakeover === 'human' ? 'bg-neutral-800 text-white font-medium' : 'text-neutral-300 hover:bg-neutral-800'}`}
-                                >
-                                    <span className="flex items-center gap-2">
-                                        <UserCheck size={12} className="text-neutral-300" />
-                                        Control Humano (Agente)
-                                    </span>
-                                    <span className="text-[10px] bg-neutral-800 px-1.5 py-0.5 rounded text-neutral-400 font-mono">
-                                        {takeoverStats.human}
-                                    </span>
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => { setSelectedTakeover('bot'); setShowTakeoverDropdown(false); }}
-                                    className={`w-full text-left px-2.5 py-1.5 text-[11px] rounded-md transition-colors flex items-center justify-between ${selectedTakeover === 'bot' ? 'bg-neutral-800 text-white font-medium' : 'text-neutral-300 hover:bg-neutral-800'}`}
-                                >
-                                    <span className="flex items-center gap-2">
-                                        <Bot size={12} className="text-neutral-300" />
-                                        Bot SI Atendiendo
-                                    </span>
-                                    <span className="text-[10px] bg-neutral-800 px-1.5 py-0.5 rounded text-neutral-400 font-mono">
-                                        {takeoverStats.bot}
-                                    </span>
-                                </button>
-                            </div>
-                        )}
-                    </div>
                 </div>
-
-                {/* Reset Filters button if any active */}
-                {(selectedCountry || selectedApiPhone || selectedStatus || selectedTakeover) && (
-                    <button
-                        type="button"
-                        onClick={() => {
-                            setSelectedCountry(null);
-                            setSelectedApiPhone(null);
-                            setSelectedStatus(null);
-                            setSelectedTakeover(null);
-                        }}
-                        className="text-[10px] text-neutral-400 hover:text-white font-semibold underline uppercase tracking-wider shrink-0"
-                    >
-                        Limpiar Filtros
-                    </button>
-                )}
-            </div>
-
-            <div className="p-2.5 border-b border-neutral-900 bg-[#0d0d0d] space-y-2 overflow-visible">
-                <div className="flex items-center justify-between gap-2 relative">
-                    <div className="relative flex-1">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-600" size={12} />
-                        <input
-                            type="text"
-                            placeholder="Buscar..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full bg-neutral-900/80 border border-neutral-800/80 rounded-lg py-1.5 pl-7 pr-2 text-[11px] focus:outline-none focus:border-blue-500/60 transition-all placeholder:text-neutral-600"
-                        />
-                    </div>
-
-                    {/* Filter Button */}
-                    <div className="relative shrink-0" ref={filterMenuRef}>
-                        <button 
-                            onClick={() => setShowFilterMenu(!showFilterMenu)}
-                            className={`p-2 rounded-lg border transition-colors ${showFilterMenu || filterBy !== 'all' || sortBy !== 'newest' ? 'text-blue-400 bg-blue-500/15 border-blue-500/30' : 'text-neutral-400 bg-neutral-900/80 border-neutral-800/80 hover:text-white hover:bg-neutral-800'}`}
-                            title="Filtros y ordenación"
-                        >
-                            <Filter size={13} />
-                        </button>
-
-                        {showFilterMenu && (
-                            <div className="absolute top-full right-0 mt-1 w-48 bg-neutral-900 border border-neutral-800 rounded shadow-2xl z-[60] overflow-hidden animate-in fade-in slide-in-from-top-1 duration-200">
-                                <div className="p-2 border-b border-neutral-800 bg-neutral-950/50">
-                                    <span className="text-[9px] font-bold text-neutral-600 uppercase tracking-widest">Sort by</span>
-                                </div>
-                                <div className="p-0.5">
-                                    <button onClick={() => { setSortBy('newest'); setShowFilterMenu(false); }} className="w-full flex items-center justify-between px-2 py-1.5 text-[11px] rounded hover:bg-neutral-800 transition-colors text-neutral-400">
-                                        Newest First {sortBy === 'newest' && <Check size={12} className="text-blue-500" />}
-                                    </button>
-                                    <button onClick={() => { setSortBy('oldest'); setShowFilterMenu(false); }} className="w-full flex items-center justify-between px-2 py-1.5 text-[11px] rounded hover:bg-neutral-800 transition-colors text-neutral-400">
-                                        Oldest First {sortBy === 'oldest' && <Check size={12} className="text-blue-500" />}
-                                    </button>
-                                </div>
-                                <div className="p-2 border-b border-t border-neutral-800 bg-neutral-950/50">
-                                    <span className="text-[9px] font-bold text-neutral-600 uppercase tracking-widest">Filter by</span>
-                                </div>
-                                <div className="p-0.5">
-                                    <button onClick={() => { setFilterBy('all'); setShowFilterMenu(false); }} className="w-full flex items-center justify-between px-2 py-1.5 text-[11px] rounded hover:bg-neutral-800 transition-colors text-neutral-400">
-                                        All Messages {filterBy === 'all' && <Check size={12} className="text-blue-500" />}
-                                    </button>
-                                    <button onClick={() => { setFilterBy('unread'); setShowFilterMenu(false); }} className="w-full flex items-center justify-between px-2 py-1.5 text-[11px] rounded hover:bg-neutral-800 transition-colors text-neutral-400">
-                                        Unread Only {filterBy === 'unread' && <Check size={12} className="text-blue-500" />}
-                                    </button>
-                                </div>
-                                {(sortBy !== 'newest' || filterBy !== 'all') && (
-                                    <button onClick={() => {setSortBy('newest'); setFilterBy('all'); setShowFilterMenu(false);}} className="w-full py-2 text-[9px] font-bold text-blue-500 hover:text-blue-400 uppercase tracking-widest text-center border-t border-neutral-800">
-                                        Reset
-                                    </button>
-                                )}
-                            </div>
-                        )}
-                    </div>
-                </div>
-            </div>
 
             {/* Conversation List */}
             <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-neutral-800 hover:scrollbar-thumb-neutral-700">
@@ -943,14 +1025,45 @@ export default function ChatList({ selectedFolder, setSelectedFolder, activeConv
                     {loading ? (
                         <div className="p-4 text-center text-neutral-700 text-[10px] animate-pulse">Cargando...</div>
                     ) : conversations.length === 0 ? (
-                        <div className="p-6 text-center text-neutral-500 flex flex-col items-center justify-center gap-2">
-                            <Inbox size={24} className="text-neutral-700 stroke-1" />
-                            <p className="text-[11px] font-medium text-neutral-400">
-                                {selectedCountry || selectedApiPhone || selectedStatus || selectedTakeover || searchQuery || filterBy === 'unread'
-                                    ? 'No hay conversaciones con los filtros seleccionados'
-                                    : 'Sin conversaciones en este canal'
-                                }
-                            </p>
+                        <div className="p-6 text-center text-neutral-500 flex flex-col items-center justify-center gap-3">
+                            <div className="w-12 h-12 rounded-2xl bg-neutral-900 border border-neutral-800 flex items-center justify-center text-neutral-400 mb-1">
+                                <Inbox size={22} className="stroke-1 text-neutral-400" />
+                            </div>
+                            <div>
+                                <p className="text-[12px] font-medium text-white">
+                                    {selectedCountry || selectedApiPhone || selectedStatus || selectedTakeover || searchQuery || filterBy === 'unread'
+                                        ? 'No hay conversaciones con los filtros seleccionados'
+                                        : 'Sin conversaciones en este canal'}
+                                </p>
+                                <p className="text-[11px] text-neutral-500 mt-0.5 max-w-xs">
+                                    Inicia un nuevo chat con un número o genera un mensaje de prueba para ver el flujo.
+                                </p>
+                            </div>
+                            <div className="flex flex-col w-full gap-2 mt-1">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setNewContactNumber('');
+                                        setNewContactName('');
+                                        setInitialMessageText('');
+                                        setNewChatChannel(selectedFolder === 'all' ? 'whatsapp' : selectedFolder);
+                                        setIsNewChatModalOpen(true);
+                                    }}
+                                    className="w-full px-3 py-2 rounded-xl bg-white hover:bg-neutral-200 text-black text-[11px] font-semibold transition-all flex items-center justify-center gap-1.5 shadow-sm"
+                                >
+                                    <Plus size={13} />
+                                    <span>Iniciar Nueva Conversación</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleCreateTestChat}
+                                    disabled={isCreatingTest}
+                                    className="w-full px-3 py-2 rounded-xl bg-blue-600/15 hover:bg-blue-600/25 text-blue-400 border border-blue-500/30 text-[11px] font-semibold transition-all flex items-center justify-center gap-1.5"
+                                >
+                                    {isCreatingTest ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
+                                    <span>Simular Mensaje de Prueba</span>
+                                </button>
+                            </div>
                             {(selectedCountry || selectedApiPhone || selectedStatus || selectedTakeover || searchQuery) && (
                                 <button
                                     type="button"
@@ -1119,6 +1232,126 @@ export default function ChatList({ selectedFolder, setSelectedFolder, activeConv
                     )}
                 </div>
             </div>
+            </div>
+
+            {/* Modal: Iniciar Nueva Conversación */}
+            <Dialog open={isNewChatModalOpen} onOpenChange={setIsNewChatModalOpen}>
+                <DialogContent className="bg-[#0c0c0c] border border-white/15 text-white sm:max-w-md rounded-2xl">
+                    <DialogHeader>
+                        <DialogTitle className="text-lg font-light tracking-tight text-white flex items-center gap-2">
+                            <Plus className="w-5 h-5 text-blue-400" />
+                            Nueva Conversación
+                        </DialogTitle>
+                        <DialogDescription className="text-xs text-neutral-400">
+                            Inicia un chat directo con un contacto o número telefónico desde cualquier canal.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-3.5 py-3">
+                        {/* Canal */}
+                        <div>
+                            <label className="text-xs text-neutral-400 font-medium block mb-1.5">
+                                Canal de Salida
+                            </label>
+                            <div className="grid grid-cols-4 gap-2">
+                                {[
+                                    { id: 'whatsapp', label: 'WhatsApp', icon: WhatsappIcon },
+                                    { id: 'messenger', label: 'Facebook', icon: Facebook },
+                                    { id: 'instagram', label: 'Instagram', icon: Instagram },
+                                    { id: 'telegram', label: 'Telegram', icon: Send },
+                                ].map((ch) => {
+                                    const Icon = ch.icon;
+                                    const isSel = newChatChannel === ch.id;
+                                    return (
+                                        <button
+                                            key={ch.id}
+                                            type="button"
+                                            onClick={() => setNewChatChannel(ch.id)}
+                                            className={`flex flex-col items-center justify-center p-2.5 rounded-xl border text-[11px] font-medium transition-all ${
+                                                isSel
+                                                    ? 'bg-blue-600/20 border-blue-500/50 text-white'
+                                                    : 'bg-white/[0.03] border-white/8 text-neutral-400 hover:text-white hover:bg-white/[0.06]'
+                                            }`}
+                                        >
+                                            <Icon className="w-4 h-4 mb-1" />
+                                            <span>{ch.label}</span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        {/* Número o ID */}
+                        <div>
+                            <label className="text-xs text-neutral-400 font-medium block mb-1.5">
+                                Número de Teléfono / Identificador
+                            </label>
+                            <Input
+                                placeholder="Ej: +1 415 555 2671 o +52 1 55..."
+                                value={newContactNumber}
+                                onChange={(e) => setNewContactNumber(e.target.value)}
+                                className="bg-black/60 border-white/15 text-white text-sm rounded-xl focus:border-white/30"
+                                autoFocus
+                            />
+                        </div>
+
+                        {/* Nombre del Contacto */}
+                        <div>
+                            <label className="text-xs text-neutral-400 font-medium block mb-1.5">
+                                Nombre del Contacto (Opcional)
+                            </label>
+                            <Input
+                                placeholder="Ej: Juan Pérez"
+                                value={newContactName}
+                                onChange={(e) => setNewContactName(e.target.value)}
+                                className="bg-black/60 border-white/15 text-white text-sm rounded-xl focus:border-white/30"
+                            />
+                        </div>
+
+                        {/* Mensaje inicial */}
+                        <div>
+                            <label className="text-xs text-neutral-400 font-medium block mb-1.5">
+                                Primer Mensaje (Opcional)
+                            </label>
+                            <Input
+                                placeholder="Ej: ¡Hola! Te escribo para dar seguimiento a tu solicitud..."
+                                value={initialMessageText}
+                                onChange={(e) => setInitialMessageText(e.target.value)}
+                                className="bg-black/60 border-white/15 text-white text-sm rounded-xl focus:border-white/30"
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleCreateNewChat();
+                                }}
+                            />
+                        </div>
+                    </div>
+
+                    <DialogFooter className="gap-2 sm:gap-0">
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            onClick={() => setIsNewChatModalOpen(false)}
+                            className="text-neutral-400 hover:text-white hover:bg-white/5 text-xs rounded-xl"
+                        >
+                            Cancelar
+                        </Button>
+                        <Button
+                            type="button"
+                            onClick={handleCreateNewChat}
+                            disabled={isSubmittingNewChat || !newContactNumber.trim()}
+                            className="bg-white hover:bg-neutral-200 text-black text-xs font-semibold px-4 rounded-xl flex items-center gap-1.5 disabled:opacity-50"
+                        >
+                            {isSubmittingNewChat ? (
+                                <>
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                    <span>Creando...</span>
+                                </>
+                            ) : (
+                                <span>Iniciar Chat</span>
+                            )}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

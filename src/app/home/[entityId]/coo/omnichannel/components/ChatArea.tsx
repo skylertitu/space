@@ -9,7 +9,7 @@ import { db } from '@/lib/firebase';
 import { doc, updateDoc, Timestamp, collection, onSnapshot } from 'firebase/firestore';
 import { useAuth } from '@/contexts/AuthContext';
 import { getContactHeaderNames, getContactPhoneDisplay } from '@/lib/omnichannel/contactHeaderInfo';
-import { isHumanTakeoverActive } from '@/lib/omnichannel/humanTakeover';
+import { isHumanTakeoverActive, releaseFields, takeoverFields } from '@/lib/omnichannel/humanTakeover';
 import { CountryFlag } from '@/components/CountryFlag';
 import { groupMessagesByDate } from '../../whatsapp/components/ConversationModal/utils';
 import { isBroadcastTemplatePlaceholder } from '@/app/home/[entityId]/cmo/broadcast/list/lib/resolveBroadcastMessageText';
@@ -278,19 +278,27 @@ export default function ChatArea({ card, groups, groupName, allConversations, on
         return doc(db, `users/${currentUser.uid}/entities/${activeEntity}/kanban-groups/${groupId}/cards/${cardId}`);
     };
 
-    const handleTakeover = async () => {
+    const writeControl = async (patch: Record<string, unknown>) => {
         const cardRef = getCardRef();
-        if (!cardRef || !currentUser) return;
+        const base = tenantPath || (currentUser?.uid && activeEntity ? `users/${currentUser.uid}/entities/${activeEntity}` : '');
+        const convId = (logic.liveCardData as any)?.conversationId || (card as any)?.conversationId || card?.id;
+        if (!cardRef || !base || !convId) {
+            if (cardRef) await updateDoc(cardRef, patch);
+            return;
+        }
+        await updateDoc(cardRef, patch);
+        await updateDoc(doc(db, `${base}/conversations/${convId}`), patch).catch(() => undefined);
+    };
+
+    const handleTakeover = async () => {
+        if (!getCardRef() || !currentUser) return;
         setTakeoverLoading(true);
         try {
-            await updateDoc(cardRef, {
-                humanTakeover: {
-                    active: true,
-                    activatedAt: Timestamp.now(),
-                    activatedBy: currentUser.uid,
-                    activatedByName: currentUser.displayName || currentUser.email || 'Agente',
-                },
-            });
+            await writeControl(takeoverFields(
+                currentUser.uid,
+                currentUser.displayName || currentUser.email || 'Agente',
+                Timestamp.now()
+            ));
             toast.success('Tomaste el control del chat');
         } catch (err) {
             console.error('[ChatArea] Takeover error:', err);
@@ -301,15 +309,10 @@ export default function ChatArea({ card, groups, groupName, allConversations, on
     };
 
     const handleReleaseBot = async () => {
-        const cardRef = getCardRef();
-        if (!cardRef || !currentUser) return;
+        if (!getCardRef() || !currentUser) return;
         setTakeoverLoading(true);
         try {
-            await updateDoc(cardRef, {
-                'humanTakeover.active': false,
-                'humanTakeover.releasedAt': Timestamp.now(),
-                'humanTakeover.releasedBy': currentUser.uid,
-            });
+            await writeControl(releaseFields(currentUser.uid, Timestamp.now()));
             toast.success('El bot retomará la conversación');
         } catch (err) {
             console.error('[ChatArea] Release bot error:', err);
@@ -890,9 +893,15 @@ export default function ChatArea({ card, groups, groupName, allConversations, on
                         )}
 
                         {!humanControl && !logic.liveCardData?.isBlocked && (
-                            <div className="absolute inset-0 bg-[#1f2c34]/75 backdrop-blur-[1px] z-10 flex items-center justify-center rounded-[32px] pointer-events-none">
-                                <span className="text-[13px] text-neutral-500 font-medium">Toma el chat para escribir</span>
-                            </div>
+                            <button
+                                type="button"
+                                onClick={handleTakeover}
+                                className="absolute inset-0 bg-[#1f2c34]/85 backdrop-blur-[1px] z-10 flex items-center justify-center gap-2 rounded-[32px] cursor-pointer hover:bg-[#1f2c34]/75 transition-all text-blue-400 hover:text-blue-300"
+                                title="Haz clic para tomar el chat y escribir"
+                            >
+                                <Hand size={15} />
+                                <span className="text-[12px] font-medium">Haz clic aquí para tomar el chat y escribir</span>
+                            </button>
                         )}
 
                         {/* Attachments (+) */}

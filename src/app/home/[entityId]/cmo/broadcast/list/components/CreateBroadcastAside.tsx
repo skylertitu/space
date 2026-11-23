@@ -94,6 +94,9 @@ export default function CreateBroadcastAside({
     const [hubBoardColumns, setHubBoardColumns] = useState<Record<string, HubKanbanColumnOption[]>>({});
     const [loadingHubColumnsKey, setLoadingHubColumnsKey] = useState<string | null>(null);
     const [availableTags, setAvailableTags] = useState<string[]>([]);
+    const [savedAudiences, setSavedAudiences] = useState<
+        { id: string; name: string; tags?: string[]; stages?: string[]; sources?: string[] }[]
+    >([]);
     const [availableCountries, setAvailableCountries] = useState<
         { iso: string; country: string; flag: string; count: number }[]
     >([]);
@@ -232,6 +235,23 @@ export default function CreateBroadcastAside({
 
         const unsubHubBoards = subscribeHubKanbanBoards(tenantPath, setHubKanbanBoards);
         const unsubTags = subscribeAvailableTags(tenantPath, setAvailableTags);
+        const unsubAudiences = onSnapshot(
+            collection(db, `${tenantPath}/audiences`),
+            (snap) =>
+                setSavedAudiences(
+                    snap.docs.map((d) => {
+                        const data = d.data();
+                        return {
+                            id: d.id,
+                            name: String(data.name || "Audiencia"),
+                            tags: Array.isArray(data.tags) ? data.tags : [],
+                            stages: Array.isArray(data.stages) ? data.stages : [],
+                            sources: Array.isArray(data.sources) ? data.sources : [],
+                        };
+                    })
+                ),
+            () => setSavedAudiences([])
+        );
         const unsubCountries = subscribeAvailableCountries(tenantPath, setAvailableCountries);
 
         const unsubContacts = onSnapshot(
@@ -251,6 +271,7 @@ export default function CreateBroadcastAside({
         return () => {
             unsubHubBoards();
             unsubTags();
+            unsubAudiences();
             unsubCountries();
             unsubContacts();
             unsubBots();
@@ -764,6 +785,30 @@ export default function CreateBroadcastAside({
 
     const renderSegmentOptions = () => (
         <>
+            {savedAudiences.length > 0 && (
+                <>
+                    <div className={segmentSectionLabel}>Audiencias guardadas</div>
+                    {savedAudiences.map((audience) => (
+                        <button
+                            key={audience.id}
+                            type="button"
+                            onClick={() =>
+                                selectSegment(audience.name, {
+                                    type: "saved_audience",
+                                    audienceId: audience.id,
+                                    label: audience.name,
+                                    tags: audience.tags || [],
+                                    stages: audience.stages || [],
+                                    sources: audience.sources || [],
+                                })
+                            }
+                            className={segmentOptionClass}
+                        >
+                            {audience.name}
+                        </button>
+                    ))}
+                </>
+            )}
             <div className={segmentSectionLabel}>General</div>
             <button type="button" onClick={() => selectSegment("Selección Manual", { type: "manual", label: "Selección Manual", manualRecipients: [] })} className={segmentOptionClass}>
                 ✍️ Selección Manual (Escribir o elegir)
@@ -796,13 +841,10 @@ export default function CreateBroadcastAside({
         </>
     );
 
+    if (!isOpen) return null;
+
     return (
-        <aside className={cn(
-            "absolute z-50 bg-[#0c0d12]/98 backdrop-blur-2xl border border-white/10 rounded-2xl flex flex-col transition-all duration-355 shadow-[-10px_20px_50px_rgba(0,0,0,0.8)] overflow-hidden",
-            isOpen 
-                ? "left-3 right-3 top-3 bottom-3 translate-x-0 opacity-100" 
-                : "right-3 top-3 bottom-3 w-[500px] translate-x-[110vw] opacity-0 pointer-events-none"
-        )}>
+        <aside className="absolute z-50 left-3 right-3 top-3 bottom-3 bg-[#0c0d12]/98 backdrop-blur-2xl border border-white/10 rounded-2xl flex flex-col transition-all duration-300 shadow-[-10px_20px_50px_rgba(0,0,0,0.8)] overflow-hidden">
             {/* Header */}
             <div className="p-4 border-b border-white/5 flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-2">
@@ -1210,7 +1252,7 @@ export default function CreateBroadcastAside({
                                     onChange={(e) => setSelectedSlot(e.target.value)}
                                     className="w-full bg-[#13151a] border border-white/5 text-xs text-neutral-300 rounded-lg p-2 outline-none"
                                 >
-                                    <option value="">Número por defecto</option>
+                                    <option value="">Número de empresa conectado</option>
                                     {SLOTS.map((s) => {
                                         const conn = slotConnections?.[s.id];
                                         const connected = !!conn?.connected;
@@ -1224,7 +1266,7 @@ export default function CreateBroadcastAside({
                                     })}
                                 </select>
                                 <p className="text-[10px] text-neutral-500 leading-relaxed">
-                                    La campaña se enviará desde este número y el bot responderá desde el mismo. Conéctalos en CTO → Integraciones → WhatsApp.
+                                    La campaña sale desde el número de WhatsApp Business que conectaste en Integraciones.
                                 </p>
                             </div>
 

@@ -43,6 +43,7 @@ export interface SegmentConfig {
         | "created_recent"
         | "inactive"
         | "stage"
+        | "saved_audience"
         | "manual";
     // Parameters depending on type
     tag?: string;
@@ -57,6 +58,11 @@ export interface SegmentConfig {
     kanbanColumnName?: string;
     botId?: string;
     stage?: string;
+    /** Audiencia guardada desde Contactos. */
+    audienceId?: string;
+    tags?: string[];
+    stages?: string[];
+    sources?: string[];
     days?: number; // for created_recent / inactive
     label?: string; // human readable label for display
     manualRecipients?: BroadcastRecipient[];
